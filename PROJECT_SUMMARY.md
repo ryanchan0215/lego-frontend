@@ -3634,9 +3634,9 @@ export default {
   }
 }
 
-      {/* ========================================
+      /* ========================================
           📱 Responsive CSS (內嵌在組件中)
-          ======================================== */}
+          ======================================== */
 
         /* ==================== 手機版 (< 768px) ==================== */
         @media (max-width: 768px) {
@@ -4468,7 +4468,7 @@ export default App;
 ### 📄 `src\api.js`
 
 ```javascript
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
 export const tokenManager = {
   setToken: (token) => {
