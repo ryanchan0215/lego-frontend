@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { X, Trash2, Edit, Package, Shield } from 'lucide-react';
 import EditPostModal from './EditPostModal';
+import { request } from '../api';  // ✅ 加呢行
 
 function MyPostsModal({ currentUser, onClose }) {
   const [myPosts, setMyPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingPost, setEditingPost] = useState(null);
 
-  // ✅ 判斷是否為管理員
-const isAdmin = currentUser?.is_admin === true;
+  const isAdmin = currentUser?.is_admin === true;
 
   useEffect(() => {
     loadMyPosts();
@@ -17,22 +17,9 @@ const isAdmin = currentUser?.is_admin === true;
   const loadMyPosts = async () => {
     try {
       setIsLoading(true);
-      // ✅ 管理員載入所有貼文，普通用戶載入自己的貼文
-      const endpoint = isAdmin 
-        ? 'http://localhost:5000/api/posts/all-posts' 
-        : 'http://localhost:5000/api/posts/my-posts';
-
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('載入失敗');
-      }
-
-      const data = await response.json();
+      // ✅ 改用 request
+      const endpoint = isAdmin ? '/posts/all-posts' : '/posts/my-posts';
+      const data = await request(endpoint);
       setMyPosts(data);
     } catch (error) {
       console.error('載入我的貼文失敗:', error);
@@ -43,7 +30,6 @@ const isAdmin = currentUser?.is_admin === true;
   };
 
   const handleDelete = async (postId, postUsername) => {
-    // ✅ 管理員刪除他人貼文時，顯示額外警告
     const isOwnPost = postUsername === currentUser.username;
     const confirmMessage = isOwnPost
       ? '確定要刪除這個貼文嗎？刪除後無法復原！'
@@ -54,17 +40,10 @@ const isAdmin = currentUser?.is_admin === true;
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+      // ✅ 改用 request
+      await request(`/posts/${postId}`, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error);
-      }
 
       alert('刪除成功！');
       await loadMyPosts();
@@ -124,7 +103,6 @@ const isAdmin = currentUser?.is_admin === true;
         padding: '20px',
         overflowY: 'auto'
       }}
-      //onClick={onClose}
     >
       <div
         className="my-posts-modal"
@@ -138,7 +116,6 @@ const isAdmin = currentUser?.is_admin === true;
           flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
         }}
-       // onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="my-posts-header" style={{
@@ -253,7 +230,6 @@ const isAdmin = currentUser?.is_admin === true;
               gap: '16px'
             }}>
               {myPosts.map((post) => {
-                // ✅ 判斷是否為自己的貼文
                 const isOwnPost = post.username === currentUser.username;
 
                 return (
@@ -265,7 +241,6 @@ const isAdmin = currentUser?.is_admin === true;
                       border: `2px solid ${post.type === 'sell' ? '#fbbf24' : '#60a5fa'}`,
                       borderRadius: '8px',
                       padding: '20px',
-                      // ✅ 管理員模式下，非自己的貼文顯示特殊邊框
                       boxShadow: isAdmin && !isOwnPost ? '0 0 0 2px #ef4444' : 'none'
                     }}
                   >
@@ -279,7 +254,6 @@ const isAdmin = currentUser?.is_admin === true;
                       flexWrap: 'wrap'
                     }}>
                       <div style={{ flex: 1, minWidth: '200px' }}>
-                        {/* ✅ 管理員模式顯示發佈者 */}
                         {isAdmin && (
                           <div style={{
                             display: 'inline-flex',
@@ -351,7 +325,6 @@ const isAdmin = currentUser?.is_admin === true;
                         gap: '8px',
                         flexWrap: 'wrap'
                       }}>
-                        {/* ✅ 只有自己的貼文才能編輯 */}
                         {isOwnPost && (
                           <button
                             onClick={() => setEditingPost(post)}
@@ -377,7 +350,6 @@ const isAdmin = currentUser?.is_admin === true;
                           </button>
                         )}
 
-                        {/* ✅ 管理員可以刪除所有貼文，普通用戶只能刪除自己的 */}
                         {(isOwnPost || isAdmin) && (
                           <button
                             onClick={() => handleDelete(post.id, post.username)}

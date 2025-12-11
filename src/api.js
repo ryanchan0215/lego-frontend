@@ -177,7 +177,6 @@ export const conversationsAPI = {
   }
 };
 
-// ✅ Token API（新增）
 export const tokensAPI = {
   earnByWatchingAd: async () => {
     return await request('/tokens/earn', {
@@ -196,3 +195,6 @@ export const statsAPI = {
     return await request('/stats/global');
   }
 };
+
+// ✅ Export request function 俾其他組件用
+export { request };

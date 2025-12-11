@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Users, TrendingUp, Plus, RefreshCw } from 'lucide-react';
+import { X, Users, Plus, RefreshCw } from 'lucide-react';
+import { request } from '../api';  // ✅ 加呢行
 
 function AdminPanel({ onClose, currentUser }) {
   const [users, setUsers] = useState([]);
@@ -17,21 +18,11 @@ function AdminPanel({ onClose, currentUser }) {
     try {
       setIsLoading(true);
       
-      const [usersRes, statsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/users', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        }),
-        fetch('http://localhost:5000/api/admin/stats/overview', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        })
+      // ✅ 改用 request
+      const [usersData, statsData] = await Promise.all([
+        request('/admin/users'),
+        request('/admin/stats/overview')
       ]);
-
-      if (!usersRes.ok || !statsRes.ok) {
-        throw new Error('載入失敗');
-      }
-
-      const usersData = await usersRes.json();
-      const statsData = await statsRes.json();
 
       setUsers(usersData);
       setStats(statsData);
@@ -50,32 +41,20 @@ function AdminPanel({ onClose, currentUser }) {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/admin/users/${selectedUser.id}/add-tokens`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          },
-          body: JSON.stringify({
-            amount: parseInt(tokenAmount),
-            description: tokenDescription || `管理員增加 ${tokenAmount} 次發佈機會`
-          })
-        }
-      );
+      // ✅ 改用 request
+      const result = await request(`/admin/users/${selectedUser.id}/add-tokens`, {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: parseInt(tokenAmount),
+          description: tokenDescription || `管理員增加 ${tokenAmount} 次發佈機會`
+        })
+      });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(result.message);
-        setTokenAmount('');
-        setTokenDescription('');
-        setSelectedUser(null);
-        await loadData();
-      } else {
-        throw new Error(result.error);
-      }
+      alert(result.message);
+      setTokenAmount('');
+      setTokenDescription('');
+      setSelectedUser(null);
+      await loadData();
     } catch (error) {
       alert('操作失敗：' + error.message);
     }
@@ -446,9 +425,7 @@ function AdminPanel({ onClose, currentUser }) {
         </div>
       </div>
 
-      {/* ========================================
-          增加 Token 彈窗
-          ======================================== */}
+      {/* 增加 Token 彈窗 */}
       {selectedUser && (
         <div
           style={{
@@ -612,9 +589,7 @@ function AdminPanel({ onClose, currentUser }) {
   );
 }
 
-// ========================================
-// 📊 統計卡片組件
-// ========================================
+// 統計卡片組件
 function StatCard({ title, value, icon, color }) {
   return (
     <div style={{
@@ -669,9 +644,6 @@ function StatCard({ title, value, icon, color }) {
   );
 }
 
-// ========================================
-// 📋 Table 樣式
-// ========================================
 const tableHeaderStyle = {
   padding: '12px 16px',
   textAlign: 'left',
