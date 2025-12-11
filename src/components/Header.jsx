@@ -1,9 +1,10 @@
-import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift } from 'lucide-react';
+import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift, HelpCircle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
 import EarnTokenModal from './EarnTokenModal';
+import ContactSupportModal from './ContactSupportModal';  // ← 新增
 
 function Header({ 
   currentUser, 
@@ -19,6 +20,7 @@ function Header({
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showMyPosts, setShowMyPosts] = useState(false);
   const [showEarnToken, setShowEarnToken] = useState(false);
+  const [showContactSupport, setShowContactSupport] = useState(false);  // ← 新增
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -88,6 +90,36 @@ function Header({
           <div className="header-buttons">
             {currentUser ? (
               <>
+                {/* 聯絡客服按鈕 - 放喺最左 */}
+                <button
+                  onClick={() => setShowContactSupport(true)}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#4b5563',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e5e7eb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  <HelpCircle size={18} />
+                  聯絡客服
+                </button>
+
                 <button
                   onClick={() => setShowEarnToken(true)}
                   style={{
@@ -381,6 +413,36 @@ function Header({
               </>
             ) : (
               <>
+                {/* 未登入狀態都可以聯絡客服 */}
+                <button
+                  onClick={() => setShowContactSupport(true)}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#4b5563',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e5e7eb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  <HelpCircle size={18} />
+                  聯絡客服
+                </button>
+
                 <button
                   onClick={onLoginClick}
                   style={{
@@ -449,6 +511,14 @@ function Header({
           currentUser={currentUser}
           onClose={() => setShowEarnToken(false)}
           onSuccess={handleTokenEarned}
+        />
+      )}
+
+      {/* 新增：聯絡客服 Modal */}
+      {showContactSupport && (
+        <ContactSupportModal
+          currentUser={currentUser}
+          onClose={() => setShowContactSupport(false)}
         />
       )}
     </>
