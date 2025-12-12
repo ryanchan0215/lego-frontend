@@ -20,8 +20,10 @@ const handleSubmit = async (e) => {
   
   try {
     await onLogin(username, password);
+    // ✅ 成功會自動關閉 modal，唔使手動 reset
   } catch (error) {
-    setIsLoggingIn(false); // ✅ 一定要 reset
+    // ✅ 失敗要 reset，但 error message 由 onLogin 處理
+    setIsLoggingIn(false);
   }
 };
 

@@ -35,13 +35,13 @@ const handleSubmit = async (e) => {
   
   try {
     await onRegister(formData);
-    // ✅ 如果成功，Modal 會自動關閉，唔使 reset
+    // ✅ 成功會自動關閉 modal，唔使手動 reset
   } catch (error) {
-    // ✅ 如果失敗，一定要 reset，等用家可以再改
+    // ✅ 失敗要 reset，但 error message 由 onRegister 處理
     setIsRegistering(false);
-    // 錯誤訊息應該已經由 onRegister 處理咗（alert 或者其他方式）
   }
 };
+
 
   return (
     <div 

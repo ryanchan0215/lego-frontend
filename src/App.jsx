@@ -101,29 +101,43 @@ function App() {
     setFilteredPosts(filtered);
   }, [searchQuery, activeTab, filters, posts]);
 
-  const handleLogin = async (username, password) => {
+const handleLogin = async (username, password) => {
+  try {
+    const result = await authAPI.login({ username, password });
+    setCurrentUser(result.user);
+    setShowLogin(false);
+    alert(`歡迎返嚟，${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+    
+    // ✅ loadPosts 失敗唔應該影響登入成功
     try {
-      const result = await authAPI.login({ username, password });
-      setCurrentUser(result.user);
-      setShowLogin(false);
-      alert(`歡迎返嚟，${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
       await loadPosts();
-    } catch (error) {
-      alert('登入失敗：' + error.message);
+    } catch (err) {
+      console.error('重新載入帖子失敗:', err);
     }
-  };
+  } catch (error) {
+    alert('登入失敗：' + error.message);
+    throw error;
+  }
+};
 
-  const handleRegister = async (userData) => {
+const handleRegister = async (userData) => {
+  try {
+    const result = await authAPI.register(userData);
+    setCurrentUser(result.user);
+    setShowRegister(false);
+    alert(`註冊成功！歡迎 ${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+    
+    // ✅ loadPosts 失敗唔應該影響註冊成功
     try {
-      const result = await authAPI.register(userData);
-      setCurrentUser(result.user);
-      setShowRegister(false);
-      alert(`註冊成功！歡迎 ${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
       await loadPosts();
-    } catch (error) {
-      alert('註冊失敗：' + error.message);
+    } catch (err) {
+      console.error('重新載入帖子失敗:', err);
     }
-  };
+  } catch (error) {
+    alert('註冊失敗：' + error.message);
+    throw error;
+  }
+};
 
   const handleLogout = async () => {
     try {
@@ -136,20 +150,25 @@ function App() {
     }
   };
 
-  const handleCreatePost = async (postData) => {
-    try {
-      await postsAPI.create(postData);
-      alert('帖子發佈成功！');
-      setShowCreatePost(false);
-      await loadPosts();
-      
-      const freshUser = await authAPI.getCurrentUser();
-      setCurrentUser(freshUser);
-      userManager.setUser(freshUser);
-    } catch (error) {
-      alert('發佈失敗：' + error.message);
-    }
-  };
+const handleCreatePost = async (postData) => {
+  try {
+    await postsAPI.create(postData);
+    alert('帖子發佈成功！');
+    setShowCreatePost(false);
+    
+    // ✅ 並行執行，一個失敗唔影響另一個
+    await Promise.allSettled([
+      loadPosts(),
+      authAPI.getCurrentUser().then(user => {
+        setCurrentUser(user);
+        userManager.setUser(user);
+      })
+    ]);
+  } catch (error) {
+    alert('發佈失敗：' + error.message);
+    throw error;
+  }
+};
 
   const handleLike = async (postId) => {
     if (!currentUser) {
