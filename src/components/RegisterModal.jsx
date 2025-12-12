@@ -11,34 +11,37 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
   });
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isRegistering) return;
-    
-    if (!formData.username || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
-      alert('請填寫所有欄位！');
-      return;
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      alert('密碼唔一致！');
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (isRegistering) return;
+  
+  if (!formData.username || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+    alert('請填寫所有欄位！');
+    return;
+  }
+  
+  if (formData.password !== formData.confirmPassword) {
+    alert('密碼唔一致！');
+    return;
+  }
 
-    if (formData.password.length < 6) {
-      alert('密碼至少要 6 個字符！');
-      return;
-    }
-    
-    setIsRegistering(true);
-    
-    try {
-      await onRegister(formData);
-    } catch (error) {
-      setIsRegistering(false);
-    }
-  };
+  if (formData.password.length < 6) {
+    alert('密碼至少要 6 個字符！');
+    return;
+  }
+  
+  setIsRegistering(true);
+  
+  try {
+    await onRegister(formData);
+    // ✅ 如果成功，Modal 會自動關閉，唔使 reset
+  } catch (error) {
+    // ✅ 如果失敗，一定要 reset，等用家可以再改
+    setIsRegistering(false);
+    // 錯誤訊息應該已經由 onRegister 處理咗（alert 或者其他方式）
+  }
+};
 
   return (
     <div 

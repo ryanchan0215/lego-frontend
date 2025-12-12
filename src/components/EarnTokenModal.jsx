@@ -30,9 +30,12 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
     
     try {
       const result = await tokensAPI.earnByWatchingAd();
-      alert(result.message);
       onSuccess();
       onClose();
+      
+      setTimeout(() => {
+        alert(result.message || '成功領取 1 個發佈代幣！');
+      }, 100);
     } catch (error) {
       alert('領取失敗：' + error.message);
       setIsClaiming(false);
@@ -54,7 +57,7 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
         zIndex: 9999999,
         padding: '20px'
       }}
-      onClick={onClose}
+      onClick={isWatching && !hasWatched ? undefined : onClose}
     >
       <div 
         style={{

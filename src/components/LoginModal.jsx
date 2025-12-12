@@ -6,24 +6,24 @@ function LoginModal({ onClose, onLogin, onSwitchToRegister }) {
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isLoggingIn) return;
-    
-    if (!username || !password) {
-      alert('請填寫所有欄位！');
-      return;
-    }
-    
-    setIsLoggingIn(true);
-    
-    try {
-      await onLogin(username, password);
-    } catch (error) {
-      setIsLoggingIn(false);
-    }
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (isLoggingIn) return;
+  
+  if (!username || !password) {
+    alert('請填寫所有欄位！');
+    return;
+  }
+  
+  setIsLoggingIn(true);
+  
+  try {
+    await onLogin(username, password);
+  } catch (error) {
+    setIsLoggingIn(false); // ✅ 一定要 reset
+  }
+};
 
   return (
     <div 

@@ -54,7 +54,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     ));
   };
 
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   
   if (isSubmitting) return;
@@ -103,7 +103,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
   try {
     await onCreatePost(postData);
   } catch (error) {
-    setIsSubmitting(false);
+    setIsSubmitting(false); // ✅ 一定要 reset
   }
 };
 

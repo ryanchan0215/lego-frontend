@@ -38,27 +38,28 @@ function ChatWindow({ conversation, currentUser, onMessageSent, onBackClick }) {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  
+  if (!newMessage.trim() || isSending) return;
+  
+  setIsSending(true);
+  
+  try {
+    await conversationsAPI.sendMessage(conversation.id, newMessage.trim());
+    setNewMessage('');
     
-    if (!newMessage.trim() || isSending) return;
+    await loadMessages();
     
-    try {
-      setIsSending(true);
-      await conversationsAPI.sendMessage(conversation.id, newMessage.trim());
-      
-      setNewMessage('');
-      await loadMessages();
-      
-      if (onMessageSent) {
-        onMessageSent();
-      }
-    } catch (error) {
-      alert('發送訊息失敗：' + error.message);
-    } finally {
-      setIsSending(false);
+    if (onMessageSent) {
+      onMessageSent();
     }
-  };
+  } catch (error) {
+    alert('發送訊息失敗：' + error.message);
+  } finally {
+    setIsSending(false); // ✅ 無論成功或失敗都要 reset
+  }
+};
 
   if (!conversation) {
     return (

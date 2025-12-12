@@ -49,30 +49,30 @@ function QuickChatModal({ post, otherUser, currentUser, onClose }) {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    
-    if (!newMessage.trim() || isSending) return;
-    
-    try {
-      setIsSending(true);
-      
-      if (conversationId) {
-        await conversationsAPI.sendMessage(conversationId, newMessage.trim());
-      } else {
-        const response = await conversationsAPI.startOrGet(post.id);
-        setConversationId(response.conversation_id);
-        await conversationsAPI.sendMessage(response.conversation_id, newMessage.trim());
-      }
-      
-      setNewMessage('');
-      await loadOrCreateConversation();
-    } catch (error) {
-      alert('發送訊息失敗：' + error.message);
-    } finally {
-      setIsSending(false);
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  
+  if (!newMessage.trim() || isSending) return;
+  
+  setIsSending(true);
+  
+  try {
+    if (conversationId) {
+      await conversationsAPI.sendMessage(conversationId, newMessage.trim());
+    } else {
+      const response = await conversationsAPI.startOrGet(post.id);
+      setConversationId(response.conversation_id);
+      await conversationsAPI.sendMessage(response.conversation_id, newMessage.trim());
     }
-  };
+    
+    setNewMessage('');
+    await loadOrCreateConversation();
+  } catch (error) {
+    alert('發送訊息失敗：' + error.message);
+  } finally {
+    setIsSending(false); // ✅ 無論成功或失敗都要 reset
+  }
+};
 
   const getItemInfo = () => {
     if (post.items && post.items.length > 0) {
