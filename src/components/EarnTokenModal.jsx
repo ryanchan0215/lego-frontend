@@ -4,8 +4,11 @@ import { tokensAPI } from '../api';
 
 function EarnTokenModal({ currentUser, onClose, onSuccess }) {
   const [isWatching, setIsWatching] = useState(false);
-  const [countdown, setCountdown] = useState(5);  // 5 秒廣告
+  const [countdown, setCountdown] = useState(5);
   const [hasWatched, setHasWatched] = useState(false);
+  
+  // ✅ 只加呢一個 state
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const handleWatchAd = () => {
     setIsWatching(true);
@@ -23,6 +26,11 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
   };
 
   const handleClaim = async () => {
+    // ✅ 加呢一行，已經 claiming 就 return
+    if (isClaiming) return;
+    
+    setIsClaiming(true);  // ✅ 設定為 claiming
+    
     try {
       const result = await tokensAPI.earnByWatchingAd();
       alert(result.message);
@@ -30,6 +38,7 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
       onClose();
     } catch (error) {
       alert('領取失敗：' + error.message);
+      setIsClaiming(false);  // ✅ 失敗先 reset
     }
   };
 
@@ -60,7 +69,6 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div style={{
           padding: '20px',
           borderBottom: '2px solid #e5e7eb',
@@ -100,10 +108,7 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* 內容區 */}
-        <div style={{
-          padding: '30px'
-        }}>
+        <div style={{ padding: '30px' }}>
           {!isWatching && !hasWatched && (
             <>
               <div style={{
@@ -245,26 +250,36 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
 
               <button
                 onClick={handleClaim}
+                disabled={isClaiming}  {/* ✅ 加 disabled */}
                 style={{
                   width: '100%',
                   padding: '14px',
-                  backgroundColor: '#10b981',
+                  backgroundColor: isClaiming ? '#d1d5db' : '#10b981',  {/* ✅ claiming 時變灰 */}
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '600',
-                  cursor: 'pointer',
+                  cursor: isClaiming ? 'not-allowed' : 'pointer',  {/* ✅ 改 cursor */}
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  opacity: isClaiming ? 0.6 : 1  {/* ✅ 降低透明度 */}
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                onMouseOver={(e) => {
+                  if (!isClaiming) {
+                    e.currentTarget.style.backgroundColor = '#059669';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isClaiming) {
+                    e.currentTarget.style.backgroundColor = '#10b981';
+                  }
+                }}
               >
                 <Gift size={20} />
-                領取 1 次發佈機會
+                {isClaiming ? '領取中...' : '領取 1 次發佈機會'}  {/* ✅ 顯示狀態 */}
               </button>
             </div>
           )}
