@@ -6,8 +6,6 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
   const [isWatching, setIsWatching] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [hasWatched, setHasWatched] = useState(false);
-  
-  // ✅ 只加呢一個 state
   const [isClaiming, setIsClaiming] = useState(false);
 
   const handleWatchAd = () => {
@@ -26,10 +24,9 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
   };
 
   const handleClaim = async () => {
-    // ✅ 加呢一行，已經 claiming 就 return
     if (isClaiming) return;
     
-    setIsClaiming(true);  // ✅ 設定為 claiming
+    setIsClaiming(true);
     
     try {
       const result = await tokensAPI.earnByWatchingAd();
@@ -38,7 +35,7 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
       onClose();
     } catch (error) {
       alert('領取失敗：' + error.message);
-      setIsClaiming(false);  // ✅ 失敗先 reset
+      setIsClaiming(false);
     }
   };
 
@@ -250,22 +247,22 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
 
               <button
                 onClick={handleClaim}
-                disabled={isClaiming}  {/* ✅ 加 disabled */}
+                disabled={isClaiming}
                 style={{
                   width: '100%',
                   padding: '14px',
-                  backgroundColor: isClaiming ? '#d1d5db' : '#10b981',  {/* ✅ claiming 時變灰 */}
+                  backgroundColor: isClaiming ? '#d1d5db' : '#10b981',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '600',
-                  cursor: isClaiming ? 'not-allowed' : 'pointer',  {/* ✅ 改 cursor */}
+                  cursor: isClaiming ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  opacity: isClaiming ? 0.6 : 1  {/* ✅ 降低透明度 */}
+                  opacity: isClaiming ? 0.6 : 1
                 }}
                 onMouseOver={(e) => {
                   if (!isClaiming) {
@@ -279,7 +276,7 @@ function EarnTokenModal({ currentUser, onClose, onSuccess }) {
                 }}
               >
                 <Gift size={20} />
-                {isClaiming ? '領取中...' : '領取 1 次發佈機會'}  {/* ✅ 顯示狀態 */}
+                {isClaiming ? '領取中...' : '領取 1 次發佈機會'}
               </button>
             </div>
           )}
