@@ -9,9 +9,12 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
     password: '',
     confirmPassword: ''
   });
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (isRegistering) return;
     
     if (!formData.username || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
       alert('請填寫所有欄位！');
@@ -28,7 +31,13 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
       return;
     }
     
-    onRegister(formData);
+    setIsRegistering(true);
+    
+    try {
+      await onRegister(formData);
+    } catch (error) {
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -71,14 +80,20 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
           </h2>
           <button
             onClick={onClose}
+            disabled={isRegistering}
             style={{
               padding: '8px',
               border: 'none',
               background: 'transparent',
-              cursor: 'pointer',
-              borderRadius: '8px'
+              cursor: isRegistering ? 'not-allowed' : 'pointer',
+              borderRadius: '8px',
+              opacity: isRegistering ? 0.5 : 1
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#fee2e2'}
+            onMouseOver={(e) => {
+              if (!isRegistering) {
+                e.target.style.backgroundColor = '#fee2e2';
+              }
+            }}
             onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
           >
             <X size={24} color="#dc2626" />
@@ -101,6 +116,7 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
               required
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              disabled={isRegistering}
               placeholder="your_username"
               style={{
                 width: '100%',
@@ -108,9 +124,14 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: isRegistering ? 0.6 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => {
+                if (!isRegistering) {
+                  e.target.style.borderColor = '#3b82f6';
+                }
+              }}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -130,6 +151,7 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled={isRegistering}
               placeholder="your@email.com"
               style={{
                 width: '100%',
@@ -137,9 +159,14 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: isRegistering ? 0.6 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => {
+                if (!isRegistering) {
+                  e.target.style.borderColor = '#3b82f6';
+                }
+              }}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -159,6 +186,7 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
               required
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              disabled={isRegistering}
               placeholder="12345678"
               style={{
                 width: '100%',
@@ -166,9 +194,14 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: isRegistering ? 0.6 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => {
+                if (!isRegistering) {
+                  e.target.style.borderColor = '#3b82f6';
+                }
+              }}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -189,6 +222,7 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
               minLength="6"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              disabled={isRegistering}
               placeholder="至少 6 個字符"
               style={{
                 width: '100%',
@@ -196,9 +230,14 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: isRegistering ? 0.6 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => {
+                if (!isRegistering) {
+                  e.target.style.borderColor = '#3b82f6';
+                }
+              }}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -218,6 +257,7 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
               required
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              disabled={isRegistering}
               placeholder="再次輸入密碼"
               style={{
                 width: '100%',
@@ -225,35 +265,50 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: isRegistering ? 0.6 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => {
+                if (!isRegistering) {
+                  e.target.style.borderColor = '#3b82f6';
+                }
+              }}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
 
           <button
             type="submit"
+            disabled={isRegistering}
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#3b82f6',
+              backgroundColor: isRegistering ? '#d1d5db' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: '500',
-              cursor: 'pointer',
+              cursor: isRegistering ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px'
+              gap: '8px',
+              opacity: isRegistering ? 0.6 : 1
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            onMouseOver={(e) => {
+              if (!isRegistering) {
+                e.target.style.backgroundColor = '#2563eb';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!isRegistering) {
+                e.target.style.backgroundColor = '#3b82f6';
+              }
+            }}
           >
             <UserPlus size={20} />
-            註冊
+            {isRegistering ? '註冊中...' : '註冊'}
           </button>
 
           <p style={{
@@ -275,12 +330,13 @@ function RegisterModal({ onClose, onRegister, onSwitchToLogin }) {
             <button
               type="button"
               onClick={onSwitchToLogin}
+              disabled={isRegistering}
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#3b82f6',
+                color: isRegistering ? '#9ca3af' : '#3b82f6',
                 fontWeight: '600',
-                cursor: 'pointer',
+                cursor: isRegistering ? 'not-allowed' : 'pointer',
                 textDecoration: 'underline',
                 padding: 0
               }}

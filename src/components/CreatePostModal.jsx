@@ -17,6 +17,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
   
   const [customColors, setCustomColors] = useState({});
   const [customConditions, setCustomConditions] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addItem = () => {
     setItems([
@@ -53,49 +54,59 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     ));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const isValid = items.every(item => 
-      item.partNumber && 
-      item.color && 
-      item.quantity && 
-      item.pricePerUnit &&
-      item.condition
-    );
-    
-    if (!isValid) {
-      alert('請填寫所有欄位！');
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (isSubmitting) return;
+  
+  const isValid = items.every(item => 
+    item.partNumber && 
+    item.color && 
+    item.quantity && 
+    item.pricePerUnit &&
+    item.condition
+  );
+  
+  if (!isValid) {
+    alert('請填寫所有欄位！');
+    return;
+  }
+
+  for (const item of items) {
+    if (item.color === '其他' && !customColors[item.id]) {
+      alert('請輸入自訂顏色！');
       return;
     }
-
-    for (const item of items) {
-      if (item.color === '其他' && !customColors[item.id]) {
-        alert('請輸入自訂顏色！');
-        return;
-      }
-      if (item.condition === '其他' && !customConditions[item.id]) {
-        alert('請輸入新舊狀況！');
-        return;
-      }
+    if (item.condition === '其他' && !customConditions[item.id]) {
+      alert('請輸入新舊狀況！');
+      return;
     }
+  }
 
-    const postData = {
-      type: type,
-      items: items.map(item => ({
-        part_number: item.partNumber,
-        color: item.color === '其他' ? customColors[item.id] : item.color,
-        quantity: parseInt(item.quantity),
-        price_per_unit: parseFloat(item.pricePerUnit),
-        condition: item.condition === '其他' ? customConditions[item.id] : item.condition
-      })),
-      contact_info: null,
-      notes: null
-    };
-
-    console.log('發送到後端的數據:', postData);
-    onCreatePost(postData);
+  const postData = {
+    type: type,
+    items: items.map(item => ({
+      part_number: item.partNumber,
+      color: item.color === '其他' ? customColors[item.id] : item.color,
+      quantity: parseInt(item.quantity),
+      price_per_unit: parseFloat(item.pricePerUnit),
+      condition: item.condition === '其他' ? customConditions[item.id] : item.condition
+    })),
+    contact_info: null,
+    notes: null
   };
+
+  console.log('發送到後端的數據:', postData);
+  
+  setIsSubmitting(true);
+  
+  try {
+    await onCreatePost(postData);
+  } catch (error) {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div 
@@ -160,21 +171,27 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               可以一次過發佈多個配件
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '8px',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              borderRadius: '8px',
-              flexShrink: 0
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#fee2e2'}
-            onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <X size={24} color="#dc2626" />
-          </button>
+        <button
+  onClick={onClose}
+  disabled={isSubmitting}
+  style={{
+    padding: '8px',
+    border: 'none',
+    background: 'transparent',
+    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+    borderRadius: '8px',
+    flexShrink: 0,
+    opacity: isSubmitting ? 0.5 : 1
+  }}
+  onMouseOver={(e) => {
+    if (!isSubmitting) {
+      e.target.style.backgroundColor = '#fee2e2';
+    }
+  }}
+  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+>
+  <X size={24} color="#dc2626" />
+</button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -734,57 +751,77 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
 
           {/* 底部按鈕 */}
           <div className="modal-footer" style={{
-            borderTop: '2px solid #e5e7eb',
-            paddingTop: '16px',
-            display: 'flex',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                padding: '12px',
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              style={{
-                flex: 2,
-                minWidth: '160px',
-                padding: '12px',
-                backgroundColor: type === 'sell' ? '#10b981' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = type === 'sell' ? '#059669' : '#2563eb'}
-              onMouseOut={(e) => e.target.style.backgroundColor = type === 'sell' ? '#10b981' : '#3b82f6'}
-            >
-              <Plus size={20} />
-              <span>發佈{type === 'sell' ? '出售' : '求購'} ({items.length} 個配件)</span>
-            </button>
-          </div>
+  borderTop: '2px solid #e5e7eb',
+  paddingTop: '16px',
+  display: 'flex',
+  gap: '12px',
+  flexWrap: 'wrap'
+}}>
+  <button
+    type="button"
+    onClick={onClose}
+    disabled={isSubmitting}
+    style={{
+      flex: 1,
+      minWidth: '120px',
+      padding: '12px',
+      backgroundColor: '#f3f4f6',
+      color: '#374151',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '16px',
+      fontWeight: '500',
+      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+      opacity: isSubmitting ? 0.6 : 1
+    }}
+    onMouseOver={(e) => {
+      if (!isSubmitting) {
+        e.target.style.backgroundColor = '#e5e7eb';
+      }
+    }}
+    onMouseOut={(e) => {
+      if (!isSubmitting) {
+        e.target.style.backgroundColor = '#f3f4f6';
+      }
+    }}
+  >
+    取消
+  </button>
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    style={{
+      flex: 2,
+      minWidth: '160px',
+      padding: '12px',
+      backgroundColor: isSubmitting ? '#d1d5db' : (type === 'sell' ? '#10b981' : '#3b82f6'),
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '16px',
+      fontWeight: '500',
+      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      opacity: isSubmitting ? 0.6 : 1
+    }}
+    onMouseOver={(e) => {
+      if (!isSubmitting) {
+        e.target.style.backgroundColor = type === 'sell' ? '#059669' : '#2563eb';
+      }
+    }}
+    onMouseOut={(e) => {
+      if (!isSubmitting) {
+        e.target.style.backgroundColor = type === 'sell' ? '#10b981' : '#3b82f6';
+      }
+    }}
+  >
+    <Plus size={20} />
+    <span>{isSubmitting ? '發佈中...' : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`}</span>
+  </button>
+</div>
         </form>
       </div>
 
