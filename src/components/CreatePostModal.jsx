@@ -111,59 +111,66 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     updateItem(id, 'imageFile', null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isSubmitting) return;
-    
-    const isValid = items.every(item => 
-      item.partNumber && 
-      item.color && 
-      item.quantity && 
-      item.pricePerUnit &&
-      item.condition
-    );
-    
-    if (!isValid) {
-      alert('請填寫所有欄位！');
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (isSubmitting) return;
+
+  // ✅ 檢查有無圖片仍在上傳中
+  const hasUploadingImages = items.some(item => item.uploading);
+  if (hasUploadingImages) {
+    alert('⏳ 請等待圖片上傳完成！');
+    return;
+  }
+  
+  const isValid = items.every(item => 
+    item.partNumber && 
+    item.color && 
+    item.quantity && 
+    item.pricePerUnit &&
+    item.condition
+  );
+  
+  if (!isValid) {
+    alert('請填寫所有欄位！');
+    return;
+  }
+
+  for (const item of items) {
+    if (item.color === '其他' && !customColors[item.id]) {
+      alert('請輸入自訂顏色！');
       return;
     }
-
-    for (const item of items) {
-      if (item.color === '其他' && !customColors[item.id]) {
-        alert('請輸入自訂顏色！');
-        return;
-      }
-      if (item.condition === '其他' && !customConditions[item.id]) {
-        alert('請輸入新舊狀況！');
-        return;
-      }
+    if (item.condition === '其他' && !customConditions[item.id]) {
+      alert('請輸入新舊狀況！');
+      return;
     }
+  }
 
-    const postData = {
-      type: type,
-      items: items.map(item => ({
-        part_number: item.partNumber,
-        color: item.color === '其他' ? customColors[item.id] : item.color,
-        quantity: parseInt(item.quantity),
-        price_per_unit: parseFloat(item.pricePerUnit),
-        condition: item.condition === '其他' ? customConditions[item.id] : item.condition,
-        image_url: item.imageUrl || null
-      })),
-      contact_info: null,
-      notes: null
-    };
-
-    console.log('發送到後端的數據:', postData);
-    
-    setIsSubmitting(true);
-    
-    try {
-      await onCreatePost(postData);
-    } catch (error) {
-      setIsSubmitting(false);
-    }
+  const postData = {
+    type: type,
+    items: items.map(item => ({
+      part_number: item.partNumber,
+      color: item.color === '其他' ? customColors[item.id] : item.color,
+      quantity: parseInt(item.quantity),
+      price_per_unit: parseFloat(item.pricePerUnit),
+      condition: item.condition === '其他' ? customConditions[item.id] : item.condition,
+      image_url: item.imageUrl || null
+    })),
+    contact_info: null,
+    notes: null
   };
+
+  console.log('📤 發送到後端的數據:', postData);
+  
+  setIsSubmitting(true);
+  
+  try {
+    await onCreatePost(postData);
+  } catch (error) {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <>
@@ -1025,39 +1032,39 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 取消
               </button>
               <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  flex: 2,
-                  minWidth: '160px',
-                  padding: '12px',
-                  backgroundColor: isSubmitting ? '#d1d5db' : (type === 'sell' ? '#10b981' : '#3b82f6'),
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: isSubmitting ? 0.6 : 1
-                }}
-                onMouseOver={(e) => {
-                  if (!isSubmitting) {
-                    e.target.style.backgroundColor = type === 'sell' ? '#059669' : '#2563eb';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (!isSubmitting) {
-                    e.target.style.backgroundColor = type === 'sell' ? '#10b981' : '#3b82f6';
-                  }
-                }}
-              >
-                <Plus size={20} />
-                <span>{isSubmitting ? '發佈中...' : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`}</span>
-              </button>
+  type="submit"
+  disabled={isSubmitting || items.some(item => item.uploading)}  // ✅ 加呢個
+  style={{
+    flex: 2,
+    minWidth: '160px',
+    padding: '12px',
+    backgroundColor: (isSubmitting || items.some(item => item.uploading)) 
+      ? '#d1d5db' 
+      : (type === 'sell' ? '#10b981' : '#3b82f6'),
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: (isSubmitting || items.some(item => item.uploading)) 
+      ? 'not-allowed' 
+      : 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
+  }}
+>
+  <Plus size={20} />
+  <span>
+    {items.some(item => item.uploading) 
+      ? '⏳ 圖片上傳中...' 
+      : isSubmitting 
+        ? '發佈中...' 
+        : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`
+    }
+  </span>
+</button>
             </div>
           </form>
         </div>

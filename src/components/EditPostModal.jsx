@@ -77,12 +77,19 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!hasChanges()) {
-      alert('沒有任何修改！');
-      return;
-    }
+  // ✅ 檢查有無圖片仍在上傳中
+  const hasUploadingImages = items.some(item => item.uploading);
+  if (hasUploadingImages) {
+    alert('⏳ 請等待圖片上傳完成！');
+    return;
+  }
+
+  if (!hasChanges()) {
+    alert('沒有任何修改！');
+    return;
+  }
 
     if (currentUser.tokens < 1) {
       alert('你的發佈次數不足，無法編輯貼文！');
@@ -507,38 +514,38 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                   取消
                 </button>
 
-                <button
-                  type="submit"
-                  disabled={!hasChanges()}
-                  style={{
-                    flex: 2,
-                    padding: '12px',
-                    backgroundColor: hasChanges() ? '#10b981' : '#d1d5db',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: hasChanges() ? 'pointer' : 'not-allowed',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseOver={(e) => {
-                    if (hasChanges()) {
-                      e.currentTarget.style.backgroundColor = '#059669';
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (hasChanges()) {
-                      e.currentTarget.style.backgroundColor = '#10b981';
-                    }
-                  }}
-                >
-                  <Save size={18} />
-                  {hasChanges() ? '儲存修改（需要 1 Token）' : '沒有修改'}
-                </button>
+            <button
+  type="submit"
+  disabled={!hasChanges() || items.some(item => item.uploading)}  // ✅ 加呢個
+  style={{
+    flex: 2,
+    minWidth: '120px',
+    padding: '12px',
+    backgroundColor: (hasChanges() && !items.some(item => item.uploading)) 
+      ? '#10b981' 
+      : '#d1d5db',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: (hasChanges() && !items.some(item => item.uploading)) 
+      ? 'pointer' 
+      : 'not-allowed',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
+  }}
+>
+  <Save size={18} />
+  {items.some(item => item.uploading) 
+    ? '⏳ 圖片上傳中...' 
+    : hasChanges() 
+      ? '儲存修改（需要 1 Token）' 
+      : '沒有修改'
+  }
+</button>
               </div>
             </div>
           </form>
