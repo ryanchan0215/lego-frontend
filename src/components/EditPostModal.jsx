@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Save, AlertCircle, Upload } from 'lucide-react';
 import { compressImage, uploadToSupabase } from '../utils/imageCompression';
 import ImageLightbox from './ImageLightbox';
-import { request } from '../api';  // ✅ 加呢行
+import { request } from '../api';
 
 function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   const [items, setItems] = useState(post.items.map(item => ({
@@ -12,7 +12,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     quantity: item.quantity,
     price_per_unit: item.price_per_unit,
     condition: item.condition || '',
-    image_url: item.image_url || null,
+    imageUrl: item.image_url || null,
     originalQuantity: item.quantity,
     originalPrice: item.price_per_unit,
     originalCondition: item.condition || '',
@@ -23,9 +23,11 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   const [lightboxImage, setLightboxImage] = useState(null);
 
   const updateItem = (id, field, value) => {
-    setItems(items.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    setItems(prevItems =>
+      prevItems.map(item => 
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
   };
 
   const handleImageUpload = async (id, file) => {
@@ -36,7 +38,11 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       return;
     }
 
-    updateItem(id, 'uploading', true);
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, uploading: true } : item
+      )
+    );
 
     try {
       const originalSizeKB = (file.size / 1024).toFixed(2);
@@ -51,20 +57,43 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       }
 
       const imageUrl = await uploadToSupabase(processedFile);
-      console.log('Upload 成功:', imageUrl);
+      console.log('✅ Upload 成功:', imageUrl);
 
-      updateItem(id, 'image_url', imageUrl);
-      updateItem(id, 'uploading', false);
+      setItems(prevItems => {
+        const updated = prevItems.map(item =>
+          item.id === id 
+            ? { 
+                ...item, 
+                imageUrl: imageUrl,
+                uploading: false 
+              }
+            : item
+        );
+        
+        console.log('📝 更新後的 items:', updated);
+        return updated;
+      });
 
     } catch (error) {
-      console.error('Upload 失敗:', error);
+      console.error('❌ Upload 失敗:', error);
       alert('圖片上傳失敗：' + error.message);
-      updateItem(id, 'uploading', false);
+      
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item.id === id ? { ...item, uploading: false } : item
+        )
+      );
     }
   };
 
   const handleRemoveImage = (id) => {
-    updateItem(id, 'image_url', null);
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id 
+          ? { ...item, imageUrl: null }
+          : item
+      )
+    );
   };
 
   const hasChanges = () => {
@@ -72,60 +101,60 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       item.quantity !== item.originalQuantity ||
       item.price_per_unit !== item.originalPrice ||
       item.condition !== item.originalCondition ||
-      item.image_url !== item.originalImageUrl
+      item.imageUrl !== item.originalImageUrl
     );
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const hasUploadingImages = items.some(item => item.uploading);
-  if (hasUploadingImages) {
-    alert('⏳ 請等待圖片上傳完成！');
-    return;
-  }
+    const hasUploadingImages = items.some(item => item.uploading);
+    if (hasUploadingImages) {
+      alert('⏳ 請等待圖片上傳完成！');
+      return;
+    }
 
-  if (!hasChanges()) {
-    alert('沒有任何修改！');
-    return;
-  }
+    if (!hasChanges()) {
+      alert('沒有任何修改！');
+      return;
+    }
 
-  if (currentUser.tokens < 1) {
-    alert('你的發佈次數不足，無法編輯貼文！');
-    return;
-  }
+    if (currentUser.tokens < 1) {
+      alert('你的發佈次數不足，無法編輯貼文！');
+      return;
+    }
 
-  if (!confirm(`修改貼文需要消耗 1 次發佈機會\n你目前有 ${currentUser.tokens} 次機會\n確定要繼續嗎？`)) {
-    return;
-  }
+    if (!confirm(`修改貼文需要消耗 1 次發佈機會\n你目前有 ${currentUser.tokens} 次機會\n確定要繼續嗎？`)) {
+      return;
+    }
 
-  try {
-    const updateData = {
-      items: items.map(item => ({
-        id: item.id,
-        quantity: parseInt(item.quantity),
-        price_per_unit: parseFloat(item.price_per_unit),
-        condition: item.condition || null,
-        image_url: item.image_url || null
-      }))
-    };
+    try {
+      const updateData = {
+        items: items.map(item => ({
+          id: item.id,
+          quantity: parseInt(item.quantity),
+          price_per_unit: parseFloat(item.price_per_unit),
+          condition: item.condition || null,
+          image_url: item.imageUrl || null
+        }))
+      };
 
-    console.log('📤 發送到後端的編輯數據:', updateData);
+      console.log('📤 發送到後端的編輯數據:', updateData);
 
-    const result = await request(`/posts/${post.id}/edit`, {
-      method: 'PUT',
-      body: JSON.stringify(updateData)
-    });
+      const result = await request(`/posts/${post.id}/edit`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
+      });
 
-    console.log('✅ 編輯成功，後端回傳:', result);
+      console.log('✅ 編輯成功，後端回傳:', result);
 
-    alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
-    onSuccess();
-  } catch (error) {
-    console.error('❌ 編輯失敗:', error);
-    alert('修改失敗：' + error.message);
-  }
-};
+      alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
+      onSuccess();
+    } catch (error) {
+      console.error('❌ 編輯失敗:', error);
+      alert('修改失敗：' + error.message);
+    }
+  };
 
   return (
     <>
@@ -229,7 +258,7 @@ const handleSubmit = async (e) => {
                     item.quantity !== item.originalQuantity || 
                     item.price_per_unit !== item.originalPrice ||
                     item.condition !== item.originalCondition ||
-                    item.image_url !== item.originalImageUrl
+                    item.imageUrl !== item.originalImageUrl
                   );
 
                   return (
@@ -249,20 +278,20 @@ const handleSubmit = async (e) => {
                       }}
                     >
                       <div className="edit-item-image">
-                        {item.image_url ? (
+                        {item.imageUrl ? (
                           <div style={{ position: 'relative' }}>
                             <img
-                              src={item.image_url}
+                              src={item.imageUrl}
                               alt="配件圖片"
                               style={{
                                 width: '100px',
                                 height: '100px',
                                 objectFit: 'cover',
                                 borderRadius: '8px',
-                                border: item.image_url !== item.originalImageUrl ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+                                border: item.imageUrl !== item.originalImageUrl ? '2px solid #3b82f6' : '2px solid #e5e7eb',
                                 cursor: 'pointer'
                               }}
-                              onClick={() => setLightboxImage(item.image_url)}
+                              onClick={() => setLightboxImage(item.imageUrl)}
                             />
                             <button
                               type="button"
@@ -519,38 +548,38 @@ const handleSubmit = async (e) => {
                   取消
                 </button>
 
-            <button
-  type="submit"
-  disabled={!hasChanges() || items.some(item => item.uploading)}  // ✅ 加呢個
-  style={{
-    flex: 2,
-    minWidth: '120px',
-    padding: '12px',
-    backgroundColor: (hasChanges() && !items.some(item => item.uploading)) 
-      ? '#10b981' 
-      : '#d1d5db',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: (hasChanges() && !items.some(item => item.uploading)) 
-      ? 'pointer' 
-      : 'not-allowed',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px'
-  }}
->
-  <Save size={18} />
-  {items.some(item => item.uploading) 
-    ? '⏳ 圖片上傳中...' 
-    : hasChanges() 
-      ? '儲存修改（需要 1 Token）' 
-      : '沒有修改'
-  }
-</button>
+                <button
+                  type="submit"
+                  disabled={!hasChanges() || items.some(item => item.uploading)}
+                  style={{
+                    flex: 2,
+                    minWidth: '120px',
+                    padding: '12px',
+                    backgroundColor: (hasChanges() && !items.some(item => item.uploading)) 
+                      ? '#10b981' 
+                      : '#d1d5db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: (hasChanges() && !items.some(item => item.uploading)) 
+                      ? 'pointer' 
+                      : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Save size={18} />
+                  {items.some(item => item.uploading) 
+                    ? '⏳ 圖片上傳中...' 
+                    : hasChanges() 
+                      ? '儲存修改（需要 1 Token）' 
+                      : '沒有修改'
+                  }
+                </button>
               </div>
             </div>
           </form>
