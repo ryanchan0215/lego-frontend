@@ -76,10 +76,9 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     );
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // ✅ 檢查有無圖片仍在上傳中
   const hasUploadingImages = items.some(item => item.uploading);
   if (hasUploadingImages) {
     alert('⏳ 請等待圖片上傳完成！');
@@ -91,36 +90,42 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     return;
   }
 
-    if (currentUser.tokens < 1) {
-      alert('你的發佈次數不足，無法編輯貼文！');
-      return;
-    }
+  if (currentUser.tokens < 1) {
+    alert('你的發佈次數不足，無法編輯貼文！');
+    return;
+  }
 
-    if (!confirm(`修改貼文需要消耗 1 次發佈機會\n你目前有 ${currentUser.tokens} 次機會\n確定要繼續嗎？`)) {
-      return;
-    }
+  if (!confirm(`修改貼文需要消耗 1 次發佈機會\n你目前有 ${currentUser.tokens} 次機會\n確定要繼續嗎？`)) {
+    return;
+  }
 
-    try {
-      // ✅ 改用 request
-      const result = await request(`/posts/${post.id}/edit`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          items: items.map(item => ({
-            id: item.id,
-            quantity: parseInt(item.quantity),
-            price_per_unit: parseFloat(item.price_per_unit),
-            condition: item.condition || null,
-            image_url: item.image_url || null
-          }))
-        })
-      });
+  try {
+    const updateData = {
+      items: items.map(item => ({
+        id: item.id,
+        quantity: parseInt(item.quantity),
+        price_per_unit: parseFloat(item.price_per_unit),
+        condition: item.condition || null,
+        image_url: item.image_url || null
+      }))
+    };
 
-      alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
-      onSuccess();
-    } catch (error) {
-      alert('修改失敗：' + error.message);
-    }
-  };
+    console.log('📤 發送到後端的編輯數據:', updateData);
+
+    const result = await request(`/posts/${post.id}/edit`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    });
+
+    console.log('✅ 編輯成功，後端回傳:', result);
+
+    alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
+    onSuccess();
+  } catch (error) {
+    console.error('❌ 編輯失敗:', error);
+    alert('修改失敗：' + error.message);
+  }
+};
 
   return (
     <>
