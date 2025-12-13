@@ -266,28 +266,10 @@ const handleCreatePost = async (postData) => {
           onFilterChange={setFilters}
         />
 
+
+
         <div className="content-grid">
-          {/* 左側廣告 */}
-          <div className="side-ad">
-            <div style={{
-              width: '160px',
-              height: '600px',
-              backgroundColor: '#f3f4f6',
-              border: '2px dashed #d1d5db',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#9ca3af',
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '0px',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed'
-            }}>
-              🖼️ 左側廣告位（待售）
-            </div>
-          </div>
+        
 
           {/* 中間內容區 */}
           <div className="posts-grid">
@@ -313,33 +295,13 @@ const handleCreatePost = async (postData) => {
             )}
           </div>
 
-          {/* 右側廣告 */}
-          <div className="side-ad">
-            <div style={{
-              width: '160px',
-              height: '600px',
-              backgroundColor: '#f3f4f6',
-              border: '2px dashed #d1d5db',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#9ca3af',
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '0px',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed'
-            }}>
-              🖼️ 右側廣告位（待售）
-            </div>
-          </div>
+       
         </div>
+
+
       </main>
 
-      <div className="bottom-ad">
-        🖼️ 底部廣告位（待售）
-      </div>
+     
 
       {/* Modals */}
       {showCreatePost && (
