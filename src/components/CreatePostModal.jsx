@@ -161,7 +161,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     notes: null
   };
 
-  console.log('📤 發送到後端的數據:', postData);
+console.log('📤 發送到後端的數據:', JSON.stringify(postData, null, 2));
   
   setIsSubmitting(true);
   
