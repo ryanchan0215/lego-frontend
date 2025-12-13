@@ -9,6 +9,8 @@ import RegisterModal from './components/RegisterModal';
 import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
+import PromotionBanner from './components/PromotionBanner';
+
 
 function App() {
   const [posts, setPosts] = useState([]);
@@ -268,27 +270,8 @@ const handleCreatePost = async (postData) => {
 
 
         <div className="content-grid">
-          {/* 左側廣告 */}
-          <div className="side-ad">
-            <div style={{
-              width: '160px',
-              height: '600px',
-              backgroundColor: '#f3f4f6',
-              border: '2px dashed #d1d5db',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#9ca3af',
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '0px',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed'
-            }}>
-              🖼️ 左側廣告位（待申請）
-            </div>
-          </div>
+           {/* ✅ 左側廣告 → 改用 PromotionBanner */}
+          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
 
           {/* 中間內容區 */}
           <div className="posts-grid">
@@ -314,27 +297,8 @@ const handleCreatePost = async (postData) => {
             )}
           </div>
 
-          {/* 右側廣告 */}
-          <div className="side-ad">
-            <div style={{
-              width: '160px',
-              height: '600px',
-              backgroundColor: '#f3f4f6',
-              border: '2px dashed #d1d5db',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#9ca3af',
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '0px',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed'
-            }}>
-              🖼️ 右側廣告位（待申請）
-            </div>
-          </div>
+         {/* ✅ 右側廣告 → 改用 PromotionBanner */}
+          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
         </div>
 
 
