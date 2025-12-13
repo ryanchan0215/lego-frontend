@@ -529,6 +529,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       {COLORS.map(color => (
                         <option key={color} value={color}>{color}</option>
                       ))}
+                      <option value="不適用">不適用</option>
                       <option value="其他">其他</option>
                     </select>
 
@@ -803,6 +804,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           {COLORS.map(color => (
                             <option key={color} value={color}>{color}</option>
                           ))}
+                          <option value="不適用">不適用</option>
                           <option value="其他">其他</option>
                         </select>
                       </div>
