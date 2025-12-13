@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Save, AlertCircle, Upload, Trash2 } from 'lucide-react';
+import { X, Save, AlertCircle, Upload } from 'lucide-react';
 import { compressImage, uploadToSupabase } from '../utils/imageCompression';
 import ImageLightbox from './ImageLightbox';
+import { request } from '../api';  // ✅ 加呢行
 
 function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   const [items, setItems] = useState(post.items.map(item => ({
@@ -27,7 +28,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     ));
   };
 
-  // ✅ 處理圖片上傳
   const handleImageUpload = async (id, file) => {
     if (!file) return;
 
@@ -63,7 +63,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     }
   };
 
-  // ✅ 刪除圖片
   const handleRemoveImage = (id) => {
     updateItem(id, 'image_url', null);
   };
@@ -95,12 +94,9 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${post.id}/edit`, {
+      // ✅ 改用 request
+      const result = await request(`/posts/${post.id}/edit`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
         body: JSON.stringify({
           items: items.map(item => ({
             id: item.id,
@@ -112,14 +108,8 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
         })
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
-        onSuccess();
-      } else {
-        throw new Error(result.error);
-      }
+      alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
+      onSuccess();
     } catch (error) {
       alert('修改失敗：' + error.message);
     }
@@ -156,7 +146,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
           }}
         >
-          {/* Header */}
           <div 
             className="edit-modal-header"
             style={{
@@ -193,7 +182,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
             </button>
           </div>
 
-          {/* Warning */}
           <div 
             className="edit-modal-warning"
             style={{
@@ -213,7 +201,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} style={{
             flex: 1,
             overflow: 'auto'
@@ -249,7 +236,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         transition: 'all 0.2s'
                       }}
                     >
-                      {/* ✅ 圖片欄位 */}
                       <div className="edit-item-image">
                         {item.image_url ? (
                           <div style={{ position: 'relative' }}>
@@ -334,7 +320,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         )}
                       </div>
 
-                      {/* 配件編號 + 顏色 */}
                       <div className="edit-item-field">
                         <div style={{
                           fontSize: '14px',
@@ -358,7 +343,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         </div>
                       </div>
 
-                      {/* 數量 */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -391,7 +375,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* 單價 */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -425,7 +408,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* 新舊 */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -465,7 +447,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         </select>
                       </div>
 
-                      {/* 小計 */}
                       <div className="edit-item-field edit-item-total">
                         <label style={{
                           display: 'block',
@@ -495,7 +476,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                 })}
               </div>
 
-              {/* Footer Buttons */}
               <div 
                 className="edit-modal-footer"
                 style={{
@@ -565,7 +545,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
         </div>
       </div>
 
-      {/* ✅ 圖片放大 Lightbox */}
       {lightboxImage && (
         <ImageLightbox
           imageUrl={lightboxImage}
