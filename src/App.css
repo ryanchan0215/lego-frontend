@@ -92,7 +92,7 @@
 
 /* ✅ 左側 Banner 加右邊距 */
 .content-grid > .side-ad:first-child {
-  margin-right: 40px;
+  margin-right: 90px;
 }
 
 /* ✅ 右側 Banner 加左邊距 */
