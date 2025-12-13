@@ -80,7 +80,7 @@
 .content-grid {
   display: grid;
   grid-template-columns: 160px 1fr 160px;
-  gap: 20px;
+  gap: 32px;
   margin-top: 24px;
 }
 
