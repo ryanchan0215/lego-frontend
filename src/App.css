@@ -80,7 +80,7 @@
 .content-grid {
   display: grid;
   grid-template-columns: 160px 1fr 160px;
-  gap: 32px;
+  gap: 0; /* ✅ 先清零 */
   margin-top: 24px;
 }
 
@@ -88,6 +88,16 @@
   position: sticky;
   top: 100px;
   height: fit-content;
+}
+
+/* ✅ 左側 Banner 加右邊距 */
+.content-grid > .side-ad:first-child {
+  margin-right: 40px;
+}
+
+/* ✅ 右側 Banner 加左邊距 */
+.content-grid > .side-ad:last-child {
+  margin-left: 20px;
 }
 
 /* Posts Grid */

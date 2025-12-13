@@ -131,96 +131,94 @@ function PromotionBanner({ onRegisterClick }) {
       )}
 
       <style jsx>{`
-        /* 🖥️ 桌面版樣式 */
-        .promo-banner-desktop {
-          position: sticky;
-          top: 100px;
-          width: 160px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 12px;
-          padding: 20px 12px;
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-          color: white;
-          text-align: center;
-          margin-right: 32px; /* ✅ 右邊加多啲空間 */
-        }
+  /* 🖥️ 桌面版樣式 */
+  .promo-banner-desktop {
+    position: sticky;
+    top: 100px;
+    width: 160px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px 12px;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-align: center;
+  }
 
-        .promo-badge {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          color: white;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 11px;
-          font-weight: 900;
-          margin-bottom: 16px;
-          display: inline-block;
-          box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
-        }
+  .promo-badge {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 8px 14px; /* ✅ 加大 padding */
+    border-radius: 20px;
+    font-size: 13px; /* ✅ 原本 11px → 13px */
+    font-weight: 900;
+    margin-bottom: 16px;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  }
 
-        .promo-title {
-          font-size: 16px;
-          font-weight: 700;
-          margin-bottom: 16px;
-          line-height: 1.3;
-        }
+  .promo-title {
+    font-size: 18px; /* ✅ 原本 16px → 18px */
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
 
-        .promo-number {
-          display: block;
-          font-size: 36px;
-          color: #ffd700;
-          font-weight: 900;
-          text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-          margin: 8px 0;
-        }
+  .promo-number {
+    display: block;
+    font-size: 42px; /* ✅ 原本 36px → 42px */
+    color: #ffd700;
+    font-weight: 900;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    margin: 8px 0;
+  }
 
-        .promo-benefits {
-          margin-bottom: 16px;
-        }
+  .promo-benefits {
+    margin-bottom: 16px;
+  }
 
-        .promo-benefit-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 10px;
-          font-size: 12px;
-          font-weight: 600;
-          background: rgba(255, 255, 255, 0.15);
-          padding: 8px;
-          border-radius: 8px;
-        }
+  .promo-benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px; /* ✅ 原本 12px → 13px */
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px;
+    border-radius: 8px;
+  }
 
-        .promo-cta-btn {
-          width: 100%;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          color: white;
-          border: none;
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 900;
-          cursor: pointer;
-          box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
-          transition: transform 0.2s;
-          margin-bottom: 12px;
-        }
+  .promo-cta-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 15px; /* ✅ 原本 14px → 15px */
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
+    transition: transform 0.2s;
+    margin-bottom: 12px;
+  }
 
-        .promo-cta-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(245, 87, 108, 0.6);
-        }
+  .promo-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 87, 108, 0.6);
+  }
 
-        .promo-urgency {
-          font-size: 11px;
-          color: #ffd700;
-          font-weight: 900;
-          animation: blink 1.5s infinite;
-        }
+  .promo-urgency {
+    font-size: 12px; /* ✅ 原本 11px → 12px */
+    color: #ffd700;
+    font-weight: 900;
+    animation: blink 1.5s infinite;
+  }
 
-        @keyframes blink {
-          0%, 50%, 100% { opacity: 1; }
-          25%, 75% { opacity: 0.5; }
-        }
-
+  @keyframes blink {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.5; }
+  }
         /* 📱 手機版：浮動按鈕 */
         .promo-fab-mobile {
           display: none;
