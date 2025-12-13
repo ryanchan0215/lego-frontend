@@ -142,7 +142,7 @@ function PromotionBanner({ onRegisterClick }) {
           box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
           color: white;
           text-align: center;
-          margin-right: 12px; /* ✅ 右邊加多啲空間 */
+          margin-right: 32px; /* ✅ 右邊加多啲空間 */
         }
 
         .promo-badge {

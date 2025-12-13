@@ -84,12 +84,10 @@
   margin-top: 24px;
 }
 
-.side-ad:first-child {
-  margin-right: 40px; /* ✅ 左邊 Banner 右邊留 40px */
-}
-
-.side-ad:last-child {
-  margin-left: 20px; /* ✅ 右邊 Banner 左邊留 20px */
+.side-ad {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
 }
 
 /* Posts Grid */
