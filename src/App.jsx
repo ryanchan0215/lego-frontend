@@ -10,6 +10,7 @@ import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
 import PromotionBanner from './components/PromotionBanner';
+import BulkSalePromo from './components/BulkSalePromo'; // ✅ 加呢行！
 
 
 function App() {
