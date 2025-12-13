@@ -268,39 +268,41 @@ const handleCreatePost = async (postData) => {
           onFilterChange={setFilters}
         />
 
+<div className="content-grid">
+  {/* ✅ 左側廣告 → PromotionBanner */}
+  <div className="side-ad">
+    <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+  </div>
 
-        <div className="content-grid">
-           {/* ✅ 左側廣告 → 改用 PromotionBanner */}
-          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+  {/* 中間內容區 */}
+  <div className="posts-grid">
+    {filteredPosts.length === 0 ? (
+      <div 
+        className="text-center py-12 bg-white rounded-lg shadow" 
+        style={{ gridColumn: '1 / -1' }}
+      >
+        <p className="text-gray-500 text-lg">
+          {searchQuery || filters.partNumber || filters.color ? '搵唔到相關帖子' : '暫時未有帖子'}
+        </p>
+      </div>
+    ) : (
+      filteredPosts.map(post => (
+        <PostCard
+          key={post.id}
+          post={post}
+          currentUser={currentUser}
+          onLike={handleLike}
+          onShowDetail={handleShowDetail}
+        />
+      ))
+    )}
+  </div>
 
-          {/* 中間內容區 */}
-          <div className="posts-grid">
-            {filteredPosts.length === 0 ? (
-              <div 
-                className="text-center py-12 bg-white rounded-lg shadow" 
-                style={{ gridColumn: '1 / -1' }}
-              >
-                <p className="text-gray-500 text-lg">
-                  {searchQuery || filters.partNumber || filters.color ? '搵唔到相關帖子' : '暫時未有帖子'}
-                </p>
-              </div>
-            ) : (
-              filteredPosts.map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  currentUser={currentUser}
-                  onLike={handleLike}
-                  onShowDetail={handleShowDetail}
-                />
-              ))
-            )}
-          </div>
-
-         {/* ✅ 右側廣告 → 改用 PromotionBanner */}
-          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
-        </div>
-
+  {/* ✅ 右側廣告 → BulkSalePromo */}
+  <div className="side-ad">
+    <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+  </div>
+</div>
 
       </main>
 
