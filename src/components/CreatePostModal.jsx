@@ -57,13 +57,16 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     setCustomConditions(newCustomConditions);
   };
 
+  // ✅ 改用 prevItems callback
   const updateItem = (id, field, value) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    setItems(prevItems =>
+      prevItems.map(item => 
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
   };
 
-  // ✅ 處理圖片上傳
+  // ✅ 重寫 handleImageUpload - 一次過 update 晒
   const handleImageUpload = async (id, file) => {
     if (!file) return;
 
@@ -73,8 +76,12 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
       return;
     }
 
-    // 設定 uploading 狀態
-    updateItem(id, 'uploading', true);
+    // ✅ 先設定 uploading = true
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, uploading: true } : item
+      )
+    );
 
     try {
       // 1. 壓縮圖片
@@ -91,86 +98,123 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
 
       // 2. Upload 到 Supabase
       const imageUrl = await uploadToSupabase(processedFile);
-      console.log('Upload 成功:', imageUrl);
+      console.log('✅ Upload 成功:', imageUrl);
 
-      // 3. 更新 state
-      updateItem(id, 'imageUrl', imageUrl);
-      updateItem(id, 'imageFile', processedFile);
-      updateItem(id, 'uploading', false);
+      // 3. ✅ 一次過 update 晒所有 fields
+      setItems(prevItems => {
+        const updated = prevItems.map(item =>
+          item.id === id 
+            ? { 
+                ...item, 
+                imageUrl: imageUrl,
+                imageFile: processedFile,
+                uploading: false 
+              }
+            : item
+        );
+        
+        console.log('📝 更新後的 items:', updated.map(i => ({
+          id: i.id,
+          partNumber: i.partNumber,
+          imageUrl: i.imageUrl,
+          uploading: i.uploading
+        })));
+        
+        return updated;
+      });
 
     } catch (error) {
-      console.error('Upload 失敗:', error);
+      console.error('❌ Upload 失敗:', error);
       alert('圖片上傳失敗：' + error.message);
-      updateItem(id, 'uploading', false);
+      
+      // ✅ 失敗時都要 set uploading = false
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item.id === id ? { ...item, uploading: false } : item
+        )
+      );
     }
   };
 
-  // ✅ 刪除圖片
+  // ✅ 改用 prevItems callback
   const handleRemoveImage = (id) => {
-    updateItem(id, 'imageUrl', null);
-    updateItem(id, 'imageFile', null);
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id 
+          ? { ...item, imageUrl: null, imageFile: null }
+          : item
+      )
+    );
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (isSubmitting) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (isSubmitting) return;
 
-  // ✅ 檢查有無圖片仍在上傳中
-  const hasUploadingImages = items.some(item => item.uploading);
-  if (hasUploadingImages) {
-    alert('⏳ 請等待圖片上傳完成！');
-    return;
-  }
-  
-  const isValid = items.every(item => 
-    item.partNumber && 
-    item.color && 
-    item.quantity && 
-    item.pricePerUnit &&
-    item.condition
-  );
-  
-  if (!isValid) {
-    alert('請填寫所有欄位！');
-    return;
-  }
-
-  for (const item of items) {
-    if (item.color === '其他' && !customColors[item.id]) {
-      alert('請輸入自訂顏色！');
+    // ✅ 檢查有無圖片仍在上傳中
+    const hasUploadingImages = items.some(item => item.uploading);
+    if (hasUploadingImages) {
+      alert('⏳ 請等待圖片上傳完成！');
       return;
     }
-    if (item.condition === '其他' && !customConditions[item.id]) {
-      alert('請輸入新舊狀況！');
+    
+    const isValid = items.every(item => 
+      item.partNumber && 
+      item.color && 
+      item.quantity && 
+      item.pricePerUnit &&
+      item.condition
+    );
+    
+    if (!isValid) {
+      alert('請填寫所有欄位！');
       return;
     }
-  }
 
-  const postData = {
-    type: type,
-    items: items.map(item => ({
-      part_number: item.partNumber,
-      color: item.color === '其他' ? customColors[item.id] : item.color,
-      quantity: parseInt(item.quantity),
-      price_per_unit: parseFloat(item.pricePerUnit),
-      condition: item.condition === '其他' ? customConditions[item.id] : item.condition,
-      image_url: item.imageUrl || null
-    })),
-    contact_info: null,
-    notes: null
+    for (const item of items) {
+      if (item.color === '其他' && !customColors[item.id]) {
+        alert('請輸入自訂顏色！');
+        return;
+      }
+      if (item.condition === '其他' && !customConditions[item.id]) {
+        alert('請輸入新舊狀況！');
+        return;
+      }
+    }
+
+    // ✅ Debug: 睇下 submit 時嘅 items state
+    console.log('🔍 Submit 時的 items:', items.map(item => ({
+      id: item.id,
+      partNumber: item.partNumber,
+      imageUrl: item.imageUrl,
+      uploading: item.uploading
+    })));
+
+    const postData = {
+      type: type,
+      items: items.map(item => ({
+        part_number: item.partNumber,
+        color: item.color === '其他' ? customColors[item.id] : item.color,
+        quantity: parseInt(item.quantity),
+        price_per_unit: parseFloat(item.pricePerUnit),
+        condition: item.condition === '其他' ? customConditions[item.id] : item.condition,
+        image_url: item.imageUrl || null
+      })),
+      contact_info: null,
+      notes: null
+    };
+
+    console.log('📤 發送到後端的數據:', JSON.stringify(postData, null, 2));
+    
+    setIsSubmitting(true);
+    
+    try {
+      await onCreatePost(postData);
+    } catch (error) {
+      setIsSubmitting(false);
+    }
   };
-
-console.log('📤 發送到後端的數據:', JSON.stringify(postData, null, 2));
-  
-  setIsSubmitting(true);
-  
-  try {
-    await onCreatePost(postData);
-  } catch (error) {
-    setIsSubmitting(false);
-  }
-};
 
   return (
     <>
@@ -1032,39 +1076,39 @@ console.log('📤 發送到後端的數據:', JSON.stringify(postData, null, 2))
                 取消
               </button>
               <button
-  type="submit"
-  disabled={isSubmitting || items.some(item => item.uploading)}  // ✅ 加呢個
-  style={{
-    flex: 2,
-    minWidth: '160px',
-    padding: '12px',
-    backgroundColor: (isSubmitting || items.some(item => item.uploading)) 
-      ? '#d1d5db' 
-      : (type === 'sell' ? '#10b981' : '#3b82f6'),
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: '500',
-    cursor: (isSubmitting || items.some(item => item.uploading)) 
-      ? 'not-allowed' 
-      : 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px'
-  }}
->
-  <Plus size={20} />
-  <span>
-    {items.some(item => item.uploading) 
-      ? '⏳ 圖片上傳中...' 
-      : isSubmitting 
-        ? '發佈中...' 
-        : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`
-    }
-  </span>
-</button>
+                type="submit"
+                disabled={isSubmitting || items.some(item => item.uploading)}
+                style={{
+                  flex: 2,
+                  minWidth: '160px',
+                  padding: '12px',
+                  backgroundColor: (isSubmitting || items.some(item => item.uploading)) 
+                    ? '#d1d5db' 
+                    : (type === 'sell' ? '#10b981' : '#3b82f6'),
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: (isSubmitting || items.some(item => item.uploading)) 
+                    ? 'not-allowed' 
+                    : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Plus size={20} />
+                <span>
+                  {items.some(item => item.uploading) 
+                    ? '⏳ 圖片上傳中...' 
+                    : isSubmitting 
+                      ? '發佈中...' 
+                      : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`
+                  }
+                </span>
+              </button>
             </div>
           </form>
         </div>
