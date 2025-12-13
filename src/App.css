@@ -80,7 +80,7 @@
 .content-grid {
   display: grid;
   grid-template-columns: 160px 1fr 160px;
-  gap: 0; /* ✅ 先清零 */
+  gap: 30px; /* ✅ 先清零 */
   margin-top: 24px;
 }
 
@@ -90,21 +90,13 @@
   height: fit-content;
 }
 
-/* ✅ 左側 Banner 加右邊距 */
-.content-grid > .side-ad:first-child {
-  margin-right: 90px;
-}
 
-/* ✅ 右側 Banner 加左邊距 */
-.content-grid > .side-ad:last-child {
-  margin-left: 20px;
-}
 
 /* Posts Grid */
 .posts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 0px;
   align-content: start;
 }
 
