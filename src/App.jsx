@@ -286,7 +286,7 @@ const handleCreatePost = async (postData) => {
               writingMode: 'vertical-rl',
               textOrientation: 'mixed'
             }}>
-              🖼️ 左側廣告位（待售）
+              🖼️ 左側廣告位（待申請）
             </div>
           </div>
 
@@ -332,7 +332,7 @@ const handleCreatePost = async (postData) => {
               writingMode: 'vertical-rl',
               textOrientation: 'mixed'
             }}>
-              🖼️ 右側廣告位（待售）
+              🖼️ 右側廣告位（待申請）
             </div>
           </div>
         </div>
@@ -341,7 +341,7 @@ const handleCreatePost = async (postData) => {
       </main>
 
       <div className="bottom-ad">
-        🖼️ 底部廣告位（待售）
+        🖼️ 底部廣告位（待申請）
       </div>
 
       {/* Modals */}

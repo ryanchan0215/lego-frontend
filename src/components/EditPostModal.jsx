@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Upload, Trash2 } from 'lucide-react';
+import { compressImage, uploadToSupabase } from '../utils/imageCompression';
+import ImageLightbox from './ImageLightbox';
 
 function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   const [items, setItems] = useState(post.items.map(item => ({
@@ -9,10 +11,15 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     quantity: item.quantity,
     price_per_unit: item.price_per_unit,
     condition: item.condition || '',
+    image_url: item.image_url || null,
     originalQuantity: item.quantity,
     originalPrice: item.price_per_unit,
-    originalCondition: item.condition || ''
+    originalCondition: item.condition || '',
+    originalImageUrl: item.image_url || null,
+    uploading: false
   })));
+
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const updateItem = (id, field, value) => {
     setItems(items.map(item =>
@@ -20,11 +27,53 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
     ));
   };
 
+  // ✅ 處理圖片上傳
+  const handleImageUpload = async (id, file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('請上傳圖片檔案！');
+      return;
+    }
+
+    updateItem(id, 'uploading', true);
+
+    try {
+      const originalSizeKB = (file.size / 1024).toFixed(2);
+      console.log(`原始大小: ${originalSizeKB} KB`);
+
+      let processedFile = file;
+      if (file.size > 1000 * 1024) {
+        console.log('圖片太大，開始壓縮...');
+        processedFile = await compressImage(file, 1000);
+        const compressedSizeKB = (processedFile.size / 1024).toFixed(2);
+        console.log(`壓縮後大小: ${compressedSizeKB} KB`);
+      }
+
+      const imageUrl = await uploadToSupabase(processedFile);
+      console.log('Upload 成功:', imageUrl);
+
+      updateItem(id, 'image_url', imageUrl);
+      updateItem(id, 'uploading', false);
+
+    } catch (error) {
+      console.error('Upload 失敗:', error);
+      alert('圖片上傳失敗：' + error.message);
+      updateItem(id, 'uploading', false);
+    }
+  };
+
+  // ✅ 刪除圖片
+  const handleRemoveImage = (id) => {
+    updateItem(id, 'image_url', null);
+  };
+
   const hasChanges = () => {
     return items.some(item => 
       item.quantity !== item.originalQuantity ||
       item.price_per_unit !== item.originalPrice ||
-      item.condition !== item.originalCondition
+      item.condition !== item.originalCondition ||
+      item.image_url !== item.originalImageUrl
     );
   };
 
@@ -57,7 +106,8 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
             id: item.id,
             quantity: parseInt(item.quantity),
             price_per_unit: parseFloat(item.price_per_unit),
-            condition: item.condition || null
+            condition: item.condition || null,
+            image_url: item.image_url || null
           }))
         })
       });
@@ -76,165 +126,216 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   };
 
   return (
-    <div
-      className="edit-post-overlay"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999999,
-        padding: '20px'
-      }}
-      //onClick={onClose}
-    >
+    <>
       <div
-        className="edit-post-modal"
+        className="edit-post-overlay"
         style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '700px',
-          maxHeight: '80vh',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
           display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999999,
+          padding: '20px'
         }}
-       // onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div 
-          className="edit-modal-header"
+        <div
+          className="edit-post-modal"
           style={{
-            padding: '20px',
-            borderBottom: '2px solid #e5e7eb',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '900px',
+            maxHeight: '80vh',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: '#f9fafb'
+            flexDirection: 'column',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
           }}
         >
-          <h2 style={{
-            margin: 0,
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#1f2937'
-          }}>
-            ✏️ 編輯貼文
-          </h2>
-
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <X size={24} color="#dc2626" />
-          </button>
-        </div>
-
-        {/* Warning */}
-        <div 
-          className="edit-modal-warning"
-          style={{
-            padding: '16px 20px',
-            backgroundColor: '#fef3c7',
-            border: '1px solid #fbbf24',
-            margin: '20px',
-            borderRadius: '8px',
-            display: 'flex',
-            gap: '12px'
-          }}
-        >
-          <AlertCircle size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ fontSize: '13px', color: '#92400e' }}>
-            <strong>⚠️ 注意：</strong>修改配件數量、價錢或新舊程度需要消耗 <strong>1 次發佈機會</strong>。
-            配件編號和顏色不能修改。
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{
-          flex: 1,
-          overflow: 'auto'
-        }}>
+          {/* Header */}
           <div 
-            className="edit-modal-content"
+            className="edit-modal-header"
             style={{
-              padding: '0 20px 20px 20px'
+              padding: '20px',
+              borderBottom: '2px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f9fafb'
             }}
           >
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {items.map((item) => {
-                const hasItemChanges = (
-                  item.quantity !== item.originalQuantity || 
-                  item.price_per_unit !== item.originalPrice ||
-                  item.condition !== item.originalCondition
-                );
+            <h2 style={{
+              margin: 0,
+              fontSize: '20px',
+              fontWeight: '700',
+              color: '#1f2937'
+            }}>
+              ✏️ 編輯貼文
+            </h2>
 
-                return (
-                  <div
-                    key={item.id}
-                    className="edit-item-card"
-                    style={{
-                      padding: '16px',
-                      backgroundColor: '#f9fafb',
-                      border: hasItemChanges ? '2px solid #3b82f6' : '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                      gap: '12px',
-                      alignItems: 'center',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {/* 📱 手機版 Header（桌面隱藏） */}
-                    <div className="edit-item-header" style={{ display: 'none' }}>
-                      <div>
-                        <div 
-                          className="edit-item-part-number"
-                          style={{
-                            fontSize: '16px',
-                            fontWeight: '700',
-                            fontFamily: 'monospace',
-                            color: '#1f2937',
-                            marginBottom: '6px'
-                          }}
-                        >
-                          #{item.part_number}
-                        </div>
-                        <div 
-                          className="edit-item-color-badge"
-                          style={{
-                            display: 'inline-block',
-                            padding: '4px 10px',
-                            backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
-                            color: 'white',
-                            borderRadius: '8px',
-                            fontSize: '11px',
-                            fontWeight: '600'
-                          }}
-                        >
-                          {item.color}
-                        </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '8px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <X size={24} color="#dc2626" />
+            </button>
+          </div>
+
+          {/* Warning */}
+          <div 
+            className="edit-modal-warning"
+            style={{
+              padding: '16px 20px',
+              backgroundColor: '#fef3c7',
+              border: '1px solid #fbbf24',
+              margin: '20px',
+              borderRadius: '8px',
+              display: 'flex',
+              gap: '12px'
+            }}
+          >
+            <AlertCircle size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '13px', color: '#92400e' }}>
+              <strong>⚠️ 注意：</strong>修改配件數量、價錢、新舊程度或圖片需要消耗 <strong>1 次發佈機會</strong>。
+              配件編號和顏色不能修改。
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{
+            flex: 1,
+            overflow: 'auto'
+          }}>
+            <div 
+              className="edit-modal-content"
+              style={{
+                padding: '0 20px 20px 20px'
+              }}
+            >
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {items.map((item) => {
+                  const hasItemChanges = (
+                    item.quantity !== item.originalQuantity || 
+                    item.price_per_unit !== item.originalPrice ||
+                    item.condition !== item.originalCondition ||
+                    item.image_url !== item.originalImageUrl
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="edit-item-card"
+                      style={{
+                        padding: '16px',
+                        backgroundColor: '#f9fafb',
+                        border: hasItemChanges ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        display: 'grid',
+                        gridTemplateColumns: '100px 1.5fr 1fr 1fr 1fr 1fr',
+                        gap: '12px',
+                        alignItems: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {/* ✅ 圖片欄位 */}
+                      <div className="edit-item-image">
+                        {item.image_url ? (
+                          <div style={{ position: 'relative' }}>
+                            <img
+                              src={item.image_url}
+                              alt="配件圖片"
+                              style={{
+                                width: '100px',
+                                height: '100px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                border: item.image_url !== item.originalImageUrl ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => setLightboxImage(item.image_url)}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(item.id)}
+                              style={{
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            style={{
+                              width: '100px',
+                              height: '100px',
+                              border: '2px dashed #d1d5db',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: item.uploading ? 'not-allowed' : 'pointer',
+                              backgroundColor: item.uploading ? '#f3f4f6' : '#fafafa',
+                              opacity: item.uploading ? 0.6 : 1
+                            }}
+                          >
+                            {item.uploading ? (
+                              <div style={{ fontSize: '11px', color: '#6b7280', textAlign: 'center' }}>
+                                上傳中...
+                              </div>
+                            ) : (
+                              <>
+                                <Upload size={20} color="#9ca3af" />
+                                <span style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>
+                                  上傳圖片
+                                </span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              disabled={item.uploading}
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  handleImageUpload(item.id, file);
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
                       </div>
-                    </div>
 
-                    {/* 桌面版 + 手機版共用欄位 */}
-                    <div className="edit-item-fields" style={{ display: 'contents' }}>
-                      {/* 配件編號 + 顏色（桌面版顯示，手機版隱藏） */}
-                      <div className="edit-item-field" style={{ display: window.innerWidth >= 768 ? 'block' : 'none' }}>
+                      {/* 配件編號 + 顏色 */}
+                      <div className="edit-item-field">
                         <div style={{
                           fontSize: '14px',
                           fontWeight: '700',
@@ -390,80 +491,88 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            {/* Footer Buttons */}
-            <div 
-              className="edit-modal-footer"
-              style={{
-                marginTop: '24px',
-                padding: '20px',
-                backgroundColor: '#f9fafb',
-                borderRadius: '8px',
-                display: 'flex',
-                gap: '12px'
-              }}
-            >
-              <button
-                type="button"
-                onClick={onClose}
+              {/* Footer Buttons */}
+              <div 
+                className="edit-modal-footer"
                 style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  border: 'none',
+                  marginTop: '24px',
+                  padding: '20px',
+                  backgroundColor: '#f9fafb',
                   borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-              >
-                取消
-              </button>
-
-              <button
-                type="submit"
-                disabled={!hasChanges()}
-                style={{
-                  flex: 2,
-                  padding: '12px',
-                  backgroundColor: hasChanges() ? '#10b981' : '#d1d5db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: hasChanges() ? 'pointer' : 'not-allowed',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                onMouseOver={(e) => {
-                  if (hasChanges()) {
-                    e.currentTarget.style.backgroundColor = '#059669';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (hasChanges()) {
-                    e.currentTarget.style.backgroundColor = '#10b981';
-                  }
+                  gap: '12px'
                 }}
               >
-                <Save size={18} />
-                {hasChanges() ? '儲存修改（需要 1 Token）' : '沒有修改'}
-              </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                >
+                  取消
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={!hasChanges()}
+                  style={{
+                    flex: 2,
+                    padding: '12px',
+                    backgroundColor: hasChanges() ? '#10b981' : '#d1d5db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: hasChanges() ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseOver={(e) => {
+                    if (hasChanges()) {
+                      e.currentTarget.style.backgroundColor = '#059669';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (hasChanges()) {
+                      e.currentTarget.style.backgroundColor = '#10b981';
+                    }
+                  }}
+                >
+                  <Save size={18} />
+                  {hasChanges() ? '儲存修改（需要 1 Token）' : '沒有修改'}
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* ✅ 圖片放大 Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
+    </>
   );
 }
 

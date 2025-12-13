@@ -1,9 +1,11 @@
 import { X, Heart, MessageCircle, Clock, Package } from 'lucide-react';
 import { useState } from 'react';
 import QuickChatModal from './MessageCenter/QuickChatModal';
+import ImageLightbox from './ImageLightbox';
 
 function PostDetailModal({ post, currentUser, onClose, onLike }) {
   const [showQuickChat, setShowQuickChat] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const getTotalQuantity = () => {
     return post.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -193,6 +195,25 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                       borderRadius: '8px'
                     }}
                   >
+                    {/* ✅ 圖片區（如果有圖片） */}
+                    {item.image_url && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <img
+                          src={item.image_url}
+                          alt={`配件 ${item.part_number}`}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(0, 0, 0, 0.1)',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => setLightboxImage(item.image_url)}
+                        />
+                      </div>
+                    )}
+
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -383,6 +404,14 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
           otherUser={{ id: post.user_id, username: post.username }}
           currentUser={currentUser}
           onClose={() => setShowQuickChat(false)}
+        />
+      )}
+
+      {/* ✅ 圖片放大 Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage}
+          onClose={() => setLightboxImage(null)}
         />
       )}
     </>
