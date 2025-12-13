@@ -320,7 +320,7 @@ const handleSubmit = async (e) => {
             color: '#6b7280',
             textAlign: 'center'
           }}>
-            註冊即可獲得 <strong style={{ color: '#3b82f6' }}>3 次免費發佈機會</strong>！
+            註冊即可獲得 <strong style={{ color: '#3b82f6' }}>10 次免費發佈機會</strong>！
           </p>
 
           <p style={{
