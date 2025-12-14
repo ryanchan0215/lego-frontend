@@ -101,7 +101,7 @@ function SearchBar({ activeTab, onTabChange, searchTerm, onSearchChange, filters
                 />
                 <input
                   type="text"
-                  placeholder="搜尋配件編號、顏色或用戶..."
+                  placeholder="搜尋產品編號、顏色或用戶..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   style={{
@@ -129,7 +129,7 @@ function SearchBar({ activeTab, onTabChange, searchTerm, onSearchChange, filters
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                🧩 配件編號
+                🧩 產品編號
               </label>
               <input
                 type="text"
