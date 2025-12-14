@@ -12,7 +12,7 @@ function BulkSalePromo({ onRegisterClick }) {
           </div>
           
           <h3 className="bulk-promo-title">
-            大量配件出售？
+            大量LEGO出售？
           </h3>
 
           <div className="bulk-promo-steps">
@@ -41,7 +41,7 @@ function BulkSalePromo({ onRegisterClick }) {
             <FileSpreadsheet size={18} color="#10b981" />
             <div>
               <strong>Excel 格式：</strong>
-              <p>配件編號 / 名稱<br/>顏色 | 數量 | 價錢</p>
+              <p>LEGO編號 / 名稱<br/>顏色 | 數量 | 價錢</p>
             </div>
           </div>
 

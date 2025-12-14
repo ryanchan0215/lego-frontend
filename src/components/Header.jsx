@@ -84,7 +84,7 @@ function Header({
       <header className="header-container">
         <div className="header-content">
           <div className="header-logo">
-            <h1>🧱 樂高配件交易平台</h1>
+            <h1>🧱 樂高產品交易平台</h1>
           </div>
 
           <div className="header-buttons">
