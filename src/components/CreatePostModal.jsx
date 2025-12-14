@@ -373,7 +373,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               color: '#374151'
             }}>
               <div>圖片</div>
-              <div>配件編號</div>
+              <div>產品編號</div>
               <div>顏色</div>
               <div>新舊</div>
               <div>數量</div>
@@ -742,7 +742,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                         color: '#374151',
                         marginBottom: '6px'
                       }}>
-                        配件編號
+                        產品編號/詳情
                       </label>
                       <input
                         type="text"
