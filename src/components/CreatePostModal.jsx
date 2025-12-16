@@ -244,7 +244,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 margin: 0,
                 wordBreak: 'break-word'
               }}>
-                🍼 發佈親子用品
+                🍼 發佈嬰幼兒用品
               </h2>
               <p style={{ 
                 fontSize: '14px', 
@@ -279,7 +279,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* 出售/求購切換 - 保持不變 */}
+            {/* 出售/徵收切換 - 保持不變 */}
             <div className="type-selector" style={{ 
               display: 'flex', 
               gap: '12px', 
@@ -309,7 +309,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 }}
               >
                 <DollarSign size={20} />
-                出售
+                出售/送贈
               </button>
               <button
                 type="button"
@@ -332,7 +332,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 }}
               >
                 <ShoppingCart size={20} />
-                求購
+                徵收
               </button>
             </div>
 
@@ -354,7 +354,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               <div>種類</div>              {/* ✅ 改 */}
               <div>品牌（如有）</div>      {/* ✅ 改 */}
               <div>新舊</div>
-              <div>{type === 'sell' ? '售價' : '求購價'} (HK$)</div>  {/* ✅ 改 */}
+              <div>{type === 'sell' ? '售價' : '徵收價'} (HK$)</div>  {/* ✅ 改 */}
               <div></div>
             </div>
 
