@@ -498,26 +498,28 @@ function MyPostsModal({ currentUser, onClose }) {
   </div>
 ))}
 
-                      {/* 總計 */}
-                      <div style={{
-                        padding: '14px',
-                        backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        color: 'white',
-                        fontWeight: '700',
-                        gap: '12px',
-                        flexWrap: 'wrap'
-                      }}>
-                        <span style={{ fontSize: '14px' }}>
-                          📦 總計：{getTotalQuantity(post.items)} 件
-                        </span>
-                        <span style={{ fontSize: '20px' }}>
-                          HK${getTotalValue(post.items).toFixed(2)}
-                        </span>
-                      </div>
+                   {/* 📦 總計（只在多於 1 件產品時顯示） */}
+{post.items.length > 1 && (
+  <div style={{
+    padding: '14px',
+    backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: 'white',
+    fontWeight: '700',
+    gap: '12px',
+    flexWrap: 'wrap'
+  }}>
+    <span style={{ fontSize: '14px' }}>
+      📦 總共 {post.items.length} 件產品
+    </span>
+    <span style={{ fontSize: '20px' }}>
+      總值 HK${post.items.reduce((sum, item) => sum + parseFloat(item.price_per_unit || 0), 0).toFixed(2)}
+    </span>
+  </div>
+)}
                     </div>
                   </div>
                 );
