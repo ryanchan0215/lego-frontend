@@ -483,33 +483,68 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                     />
 
                     {/* ✅ 種類 */}
-                    <select
-                      required
-                      value={item.category}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        updateItem(item.id, 'category', value);
-                        
-                        if (value !== '其他') {
-                          const newCustomCategories = {...customCategories};
-                          delete newCustomCategories[item.id];
-                          setCustomCategories(newCustomCategories);
-                        }
-                      }}
-                      style={{
-                        padding: '10px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box',
-                        width: '100%'
-                      }}
-                    >
-                      <option value="">選擇...</option>
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                <select
+  required
+  value={item.category}
+  onChange={(e) => {
+    const value = e.target.value;
+    updateItem(item.id, 'category', value);
+    
+    if (value !== '其他') {
+      const newCustomCategories = {...customCategories};
+      delete newCustomCategories[item.id];
+      setCustomCategories(newCustomCategories);
+    }
+  }}
+  style={{
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    boxSizing: 'border-box'
+  }}
+>
+  <option value="">選擇...</option>
+  
+  {/* 🚼 大件用品 */}
+  <optgroup label="🚼 大件用品">
+    <option value="嬰兒車">🚼 嬰兒車</option>
+    <option value="嬰兒床">🛏️ 嬰兒床</option>
+    <option value="安全座椅">🚗 安全座椅</option>
+    <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
+  </optgroup>
+
+  {/* 🍼 飲食類 */}
+  <optgroup label="🍼 飲食類">
+    <option value="奶粉">🥛 奶粉</option>
+    <option value="嬰兒食品">🍚 嬰兒食品</option>
+    <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
+    <option value="餵食用具">🍴 餵食用具</option>
+  </optgroup>
+
+  {/* 🧸 玩具 & 學習 */}
+  <optgroup label="🧸 玩具 & 學習">
+    <option value="玩具">🧸 玩具</option>
+    <option value="圖書">📚 圖書</option>
+  </optgroup>
+
+  {/* 👕 衣物類 */}
+  <optgroup label="👕 衣物類">
+    <option value="衣服">👕 衣服</option>
+    <option value="鞋襪">👟 鞋襪</option>
+  </optgroup>
+
+  {/* 🧷 清潔護理 */}
+  <optgroup label="🧷 清潔護理">
+    <option value="尿片">🧷 尿片</option>
+    <option value="清潔用品">🧼 清潔用品</option>
+    <option value="洗護用品">🛁 洗護用品</option>
+  </optgroup>
+
+  {/* 📦 其他 */}
+  <option value="其他">📦 其他</option>
+</select>
 
                     {/* ✅ 品牌（非必填） */}
                     <input
@@ -753,32 +788,67 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           種類
                         </label>
                         <select
-                          required
-                          value={item.category}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            updateItem(item.id, 'category', value);
-                            
-                            if (value !== '其他') {
-                              const newCustomCategories = {...customCategories};
-                              delete newCustomCategories[item.id];
-                              setCustomCategories(newCustomCategories);
-                            }
-                          }}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            boxSizing: 'border-box'
-                          }}
-                        >
-                          <option value="">選擇...</option>
-                          {CATEGORIES.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
+  required
+  value={item.category}
+  onChange={(e) => {
+    const value = e.target.value;
+    updateItem(item.id, 'category', value);
+    
+    if (value !== '其他') {
+      const newCustomCategories = {...customCategories};
+      delete newCustomCategories[item.id];
+      setCustomCategories(newCustomCategories);
+    }
+  }}
+  style={{
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    boxSizing: 'border-box'
+  }}
+>
+  <option value="">選擇...</option>
+  
+  {/* 🚼 大件用品 */}
+  <optgroup label="🚼 大件用品">
+    <option value="嬰兒車">🚼 嬰兒車</option>
+    <option value="嬰兒床">🛏️ 嬰兒床</option>
+    <option value="安全座椅">🚗 安全座椅</option>
+    <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
+  </optgroup>
+
+  {/* 🍼 飲食類 */}
+  <optgroup label="🍼 飲食類">
+    <option value="奶粉">🥛 奶粉</option>
+    <option value="嬰兒食品">🍚 嬰兒食品</option>
+    <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
+    <option value="餵食用具">🍴 餵食用具</option>
+  </optgroup>
+
+  {/* 🧸 玩具 & 學習 */}
+  <optgroup label="🧸 玩具 & 學習">
+    <option value="玩具">🧸 玩具</option>
+    <option value="圖書">📚 圖書</option>
+  </optgroup>
+
+  {/* 👕 衣物類 */}
+  <optgroup label="👕 衣物類">
+    <option value="衣服">👕 衣服</option>
+    <option value="鞋襪">👟 鞋襪</option>
+  </optgroup>
+
+  {/* 🧷 清潔護理 */}
+  <optgroup label="🧷 清潔護理">
+    <option value="尿片">🧷 尿片</option>
+    <option value="清潔用品">🧼 清潔用品</option>
+    <option value="洗護用品">🛁 洗護用品</option>
+  </optgroup>
+
+  {/* 📦 其他 */}
+  <option value="其他">📦 其他</option>
+</select>
                       </div>
 
                       <div>
