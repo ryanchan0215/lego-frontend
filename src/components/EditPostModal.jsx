@@ -7,13 +7,13 @@ import { request } from '../api';
 function EditPostModal({ post, currentUser, onClose, onSuccess }) {
   const [items, setItems] = useState(post.items.map(item => ({
     id: item.id,
-    part_number: item.part_number,
-    color: item.color,
-    quantity: item.quantity,
+    item_description: item.item_description,
+    category: item.category,
+    brand: item.brand,
     price_per_unit: item.price_per_unit,
     condition: item.condition || '',
     imageUrl: item.image_url || null,
-    originalQuantity: item.quantity,
+    originalBrand: item.brand,
     originalPrice: item.price_per_unit,
     originalCondition: item.condition || '',
     originalImageUrl: item.image_url || null,
@@ -98,7 +98,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
 
   const hasChanges = () => {
     return items.some(item => 
-      item.quantity !== item.originalQuantity ||
+      item.brand !== item.originalBrand ||
       item.price_per_unit !== item.originalPrice ||
       item.condition !== item.originalCondition ||
       item.imageUrl !== item.originalImageUrl
@@ -132,7 +132,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       const updateData = {
         items: items.map(item => ({
           id: item.id,
-          quantity: parseInt(item.quantity),
+          brand: item.brand || null, // ✅ 改名
           price_per_unit: parseFloat(item.price_per_unit),
           condition: item.condition || null,
           image_url: item.imageUrl || null
@@ -237,8 +237,8 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
           >
             <AlertCircle size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div style={{ fontSize: '13px', color: '#92400e' }}>
-              <strong>⚠️ 注意：</strong>修改配件數量、價錢、新舊程度或圖片需要消耗 <strong>1 次發佈機會</strong>。
-              配件編號和顏色不能修改。
+              <strong>⚠️ 注意：</strong>修改品牌、價錢、新舊程度或圖片需要消耗 <strong>1 次發佈機會</strong>。
+              產品資料和種類不能修改。
             </div>
           </div>
 
@@ -255,7 +255,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
               <div style={{ display: 'grid', gap: '12px' }}>
                 {items.map((item) => {
                   const hasItemChanges = (
-                    item.quantity !== item.originalQuantity || 
+                    item.brand !== item.originalBrand || 
                     item.price_per_unit !== item.originalPrice ||
                     item.condition !== item.originalCondition ||
                     item.imageUrl !== item.originalImageUrl
@@ -271,18 +271,19 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         border: hasItemChanges ? '2px solid #3b82f6' : '2px solid #e5e7eb',
                         borderRadius: '8px',
                         display: 'grid',
-                        gridTemplateColumns: '100px 1.5fr 1fr 1fr 1fr 1fr',
+                        gridTemplateColumns: '100px 1.5fr 1fr 1fr 1fr',
                         gap: '12px',
                         alignItems: 'center',
                         transition: 'all 0.2s'
                       }}
                     >
+                      {/* ✅ 圖片區 */}
                       <div className="edit-item-image">
                         {item.imageUrl ? (
                           <div style={{ position: 'relative' }}>
                             <img
                               src={item.imageUrl}
-                              alt="配件圖片"
+                              alt="產品圖片"
                               style={{
                                 width: '100px',
                                 height: '100px',
@@ -361,15 +362,16 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         )}
                       </div>
 
+                      {/* ✅ 產品資料 + 種類（不可編輯） */}
                       <div className="edit-item-field">
                         <div style={{
                           fontSize: '14px',
                           fontWeight: '700',
-                          fontFamily: 'monospace',
                           color: '#1f2937',
-                          marginBottom: '6px'
+                          marginBottom: '6px',
+                          wordBreak: 'break-word'
                         }}>
-                          #{item.part_number}
+                          {item.item_description}
                         </div>
                         <div style={{
                           display: 'inline-block',
@@ -380,10 +382,11 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                           fontSize: '11px',
                           fontWeight: '600'
                         }}>
-                          {item.color}
+                          {item.category}
                         </div>
                       </div>
 
+                      {/* ✅ 品牌（可編輯） */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -392,30 +395,31 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                           color: '#6b7280',
                           marginBottom: '6px'
                         }}>
-                          數量 {item.quantity !== item.originalQuantity && '✏️'}
+                          品牌 {item.brand !== item.originalBrand && '✏️'}
                         </label>
                         <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                          type="text"
+                          value={item.brand || ''}
+                          onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
+                          placeholder="選填"
                           style={{
                             width: '100%',
                             padding: '10px 12px',
-                            border: item.quantity !== item.originalQuantity 
+                            border: item.brand !== item.originalBrand 
                               ? '2px solid #3b82f6' 
                               : '2px solid #e5e7eb',
                             borderRadius: '6px',
                             fontSize: '14px',
                             fontWeight: '700',
                             boxSizing: 'border-box',
-                            backgroundColor: item.quantity !== item.originalQuantity 
+                            backgroundColor: item.brand !== item.originalBrand 
                               ? '#eff6ff' 
                               : 'white'
                           }}
                         />
                       </div>
 
+                      {/* ✅ 單價（可編輯） */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -449,6 +453,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                         />
                       </div>
 
+                      {/* ✅ 新舊（可編輯） */}
                       <div className="edit-item-field">
                         <label style={{
                           display: 'block',
@@ -486,31 +491,6 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                           <option value="6成新">6成新</option>
                           <option value="5成新或以下">5成新或以下</option>
                         </select>
-                      </div>
-
-                      <div className="edit-item-field edit-item-total">
-                        <label style={{
-                          display: 'block',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#6b7280',
-                          marginBottom: '6px'
-                        }}>
-                          小計
-                        </label>
-                        <div 
-                          className="edit-item-total-value"
-                          style={{
-                            padding: '10px 12px',
-                            backgroundColor: '#dcfce7',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            fontWeight: '700',
-                            color: '#15803d'
-                          }}
-                        >
-                          ${(item.quantity * item.price_per_unit).toFixed(2)}
-                        </div>
                       </div>
                     </div>
                   );

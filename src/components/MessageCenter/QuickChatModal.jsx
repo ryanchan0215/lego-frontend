@@ -49,40 +49,42 @@ function QuickChatModal({ post, otherUser, currentUser, onClose }) {
     }
   };
 
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  
-  if (!newMessage.trim() || isSending) return;
-  
-  setIsSending(true);
-  
-  try {
-    if (conversationId) {
-      await conversationsAPI.sendMessage(conversationId, newMessage.trim());
-    } else {
-      const response = await conversationsAPI.startOrGet(post.id);
-      setConversationId(response.conversation_id);
-      await conversationsAPI.sendMessage(response.conversation_id, newMessage.trim());
-    }
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
     
-    setNewMessage('');
-    await loadOrCreateConversation();
-  } catch (error) {
-    alert('發送訊息失敗：' + error.message);
-  } finally {
-    setIsSending(false); // ✅ 無論成功或失敗都要 reset
-  }
-};
+    if (!newMessage.trim() || isSending) return;
+    
+    setIsSending(true);
+    
+    try {
+      if (conversationId) {
+        await conversationsAPI.sendMessage(conversationId, newMessage.trim());
+      } else {
+        const response = await conversationsAPI.startOrGet(post.id);
+        setConversationId(response.conversation_id);
+        await conversationsAPI.sendMessage(response.conversation_id, newMessage.trim());
+      }
+      
+      setNewMessage('');
+      await loadOrCreateConversation();
+    } catch (error) {
+      alert('發送訊息失敗：' + error.message);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
+  // ✅ 改用新 DB 欄位名
   const getItemInfo = () => {
     if (post.items && post.items.length > 0) {
       const firstItem = post.items[0];
       return {
-        partNumber: firstItem.part_number,
-        color: firstItem.color,
+        description: firstItem.item_description,    // ✅ 改名
+        category: firstItem.category,               // ✅ 改名
+        brand: firstItem.brand,                     // ✅ 新增
         condition: firstItem.condition,
-        quantity: post.items.reduce((sum, item) => sum + item.quantity, 0),
-        totalPrice: post.items.reduce((sum, item) => sum + (item.quantity * item.price_per_unit), 0)
+        itemCount: post.items.length,               // ✅ 改用項目數
+        totalPrice: post.items.reduce((sum, item) => sum + item.price_per_unit, 0) // ✅ 改邏輯
       };
     }
     return null;
@@ -106,7 +108,6 @@ const handleSendMessage = async (e) => {
         zIndex: 9999999,
         padding: '20px'
       }}
-     // onClick={onClose}
     >
       <div 
         className="quick-chat-modal"
@@ -120,7 +121,6 @@ const handleSendMessage = async (e) => {
           flexDirection: 'column',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
         }}
-        //onClick={(e) => e.stopPropagation()}
       >
         {/* 標題欄 */}
         <div 
@@ -165,6 +165,7 @@ const handleSendMessage = async (e) => {
             </button>
           </div>
 
+          {/* ✅ 產品資訊卡片（新 DB 欄位） */}
           {itemInfo && (
             <div 
               className="quick-chat-item-info"
@@ -198,16 +199,50 @@ const handleSendMessage = async (e) => {
                 className="quick-chat-item-details"
                 style={{ flex: 1, minWidth: 0 }}
               >
+                {/* ✅ 產品資料 */}
                 <div style={{
                   fontSize: '14px',
                   fontWeight: '600',
                   color: '#1e40af',
                   marginBottom: '6px',
-                  fontFamily: 'monospace'
+                  wordBreak: 'break-word'
                 }}>
-                  #{itemInfo.partNumber} {itemInfo.color}
+                  {itemInfo.description}
                 </div>
                 
+                {/* ✅ 種類 + 品牌 */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginBottom: '6px',
+                  flexWrap: 'wrap'
+                }}>
+                  <span style={{
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#dbeafe',
+                    color: '#1e40af',
+                    fontWeight: '600'
+                  }}>
+                    📂 {itemInfo.category}
+                  </span>
+                  
+                  {itemInfo.brand && (
+                    <span style={{
+                      fontSize: '11px',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: '#f3f4f6',
+                      color: '#374151',
+                      fontWeight: '600'
+                    }}>
+                      🏷️ {itemInfo.brand}
+                    </span>
+                  )}
+                </div>
+                
+                {/* ✅ 新舊程度 */}
                 {itemInfo.condition && (
                   <div style={{
                     fontSize: '11px',
@@ -219,6 +254,7 @@ const handleSendMessage = async (e) => {
                   </div>
                 )}
                 
+                {/* ✅ 項目數 + 總價 + 類型 */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -230,7 +266,7 @@ const handleSendMessage = async (e) => {
                     color: '#3b82f6',
                     fontWeight: '600'
                   }}>
-                    ×{itemInfo.quantity} 件
+                    {itemInfo.itemCount} 項產品
                   </div>
                   
                   <div style={{

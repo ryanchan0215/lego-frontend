@@ -1,9 +1,8 @@
 import { Package, Heart, Info } from 'lucide-react';
 
 function PostCard({ post, currentUser, onLike, onShowDetail }) {
-  const totalQuantity = post.items.reduce((sum, item) => sum + item.quantity, 0);
   const totalValue = post.items.reduce(
-    (sum, item) => sum + (item.quantity * item.price_per_unit),
+    (sum, item) => sum + item.price_per_unit,
     0
   );
 
@@ -24,25 +23,9 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
     }
   };
 
-  // ✅ Condition 顯示（支援自訂值）
   const getConditionDisplay = (condition) => {
     if (!condition) return null;
-    
-    const standardConditions = ['new', 'like_new', 'good', 'fair', 'other'];
-    
-    // ✅ 如果是自訂值，直接顯示
-    if (!standardConditions.includes(condition)) {
-      return `📋 ${condition}`;
-    }
-    
-    const map = {
-      'new': '🆕 全新',
-      'like_new': '✨ 如新',
-      'good': '👍 良好',
-      'fair': '👌 尚可',
-      'other': '❓ 其他'
-    };
-    return map[condition] || condition;
+    return `📋 ${condition}`;
   };
 
   const postItColor = post.type === 'sell' ? '#fef3c7' : '#dbeafe';
@@ -144,7 +127,7 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
         </div>
       </div>
 
-      {/* ✅ 配件列表（每個配件都顯示自己的 condition） */}
+      {/* ✅ 配件列表（新 DB 欄位名） */}
       <div style={{ 
         flex: 1,
         marginBottom: '12px',
@@ -168,14 +151,17 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between',
-              marginBottom: '4px'
+              marginBottom: '4px',
+              flexWrap: 'wrap',
+              gap: '4px'
             }}>
               <span style={{ 
                 fontWeight: '700',
                 color: textColor,
-                fontFamily: 'monospace'
+                fontSize: '12px',
+                wordBreak: 'break-word'
               }}>
-                #{item.part_number || '未知'}
+                {item.item_description || '未知產品'}
               </span>
               <span style={{
                 backgroundColor: borderColor,
@@ -183,13 +169,27 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
                 padding: '2px 8px',
                 borderRadius: '8px',
                 fontSize: '11px',
-                fontWeight: '600'
+                fontWeight: '600',
+                flexShrink: 0
               }}>
-                {item.color}
+                {item.category}
               </span>
             </div>
 
-            {/* ✅ 顯示配件的 Condition（如果有） */}
+            {/* ✅ 顯示品牌（如果有） */}
+            {item.brand && (
+              <div style={{
+                fontSize: '11px',
+                color: textColor,
+                marginBottom: '4px',
+                fontWeight: '600',
+                opacity: 0.8
+              }}>
+                🏷️ {item.brand}
+              </div>
+            )}
+
+            {/* ✅ 顯示新舊程度（如果有） */}
             {item.condition && getConditionDisplay(item.condition) && (
               <div style={{
                 fontSize: '11px',
@@ -204,13 +204,12 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
 
             <div style={{ 
               display: 'flex', 
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               color: textColor,
-              fontSize: '12px'
+              fontSize: '14px'
             }}>
-              <span>數量: <strong>×{item.quantity}</strong></span>
               <span style={{ fontWeight: '700' }}>
-                ${item.price_per_unit?.toFixed(2) || '0.00'}/件
+                ${item.price_per_unit?.toFixed(2) || '0.00'}
               </span>
             </div>
           </div>
@@ -236,7 +235,7 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
             fontWeight: '600'
           }}>
             <Package size={16} />
-            <span>{totalQuantity} 件</span>
+            <span>{post.items.length} 項產品</span>
           </div>
 
           <div style={{

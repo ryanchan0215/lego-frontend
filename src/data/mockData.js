@@ -1,12 +1,56 @@
 export const mockUsers = [
-  { id: 1, username: 'LegoFan123', email: 'legofan@example.com' },
-  { id: 2, username: 'BrickMaster', email: 'brickmaster@example.com' },
-  { id: 3, username: 'BuilderPro', email: 'builderpro@example.com' }
+  { id: 1, username: 'BabyMom123', email: 'babymom@example.com' },
+  { id: 2, username: 'DadSeller', email: 'dadseller@example.com' },
+  { id: 3, username: 'ToyCollector', email: 'toycollector@example.com' }
 ];
 
-export const COLORS = [
-  '紅色', '藍色', '黃色', '綠色', '黑色', '白色', 
-  '灰色', '橙色', '紫色', '粉紅色', '啡色', '透明'
+// ✅ 改：種類（嬰幼兒用品）
+export const CATEGORIES = [
+  '嬰兒車',
+  '汽車座椅',
+  '嬰兒床/搖籃',
+  '餐椅',
+  '學行車',
+  '玩具',
+  '衣服',
+  '鞋仔',
+  '奶樽/奶咀',
+  '尿片袋',
+  '揹帶',
+  '沖涼用品',
+  '圖書',
+  '其他'
+];
+
+// ✅ 品牌選項（非必填）
+export const BRANDS = [
+  'Chicco',
+  'Combi',
+  'Maclaren',
+  'Stokke',
+  'Bugaboo',
+  'Aprica',
+  'Fisher-Price',
+  'VTech',
+  "Carter's",
+  'Baby Gap',
+  'Philips Avent',
+  'Tommee Tippee',
+  'Pigeon',
+  'Ergobaby',
+  '其他'
+];
+
+// ✅ 新舊程度
+export const CONDITIONS = [
+  '全新未開封',
+  '全新已開封',
+  '9成新',
+  '8成新',
+  '7成新',
+  '6成新',
+  '5成新或以下',
+  '其他'
 ];
 
 export const mockPosts = [
@@ -14,50 +58,18 @@ export const mockPosts = [
   {
     id: 1,
     userId: 1,
-    username: 'LegoFan123',
+    username: 'BabyMom123',
     type: 'sell',
     items: [
-      { partNumber: '3001', color: '紅色', quantity: 50, pricePerUnit: 0.5 },
-      { partNumber: '3001', color: '藍色', quantity: 30, pricePerUnit: 0.5 },
-      { partNumber: '3004', color: '黃色', quantity: 20, pricePerUnit: 0.8 }
+      { 
+        itemDescription: 'Chicco 嬰兒車，輕便可摺疊', 
+        category: '嬰兒車', 
+        brand: 'Chicco',
+        condition: '8成新',
+        pricePerUnit: 800
+      }
     ],
     createdAt: new Date('2025-12-01'),
-    status: 'available'
-  },
-  {
-    id: 2,
-    userId: 2,
-    username: 'BrickMaster',
-    type: 'sell',
-    items: [
-      { partNumber: '2x4', color: '黑色', quantity: 100, pricePerUnit: 1.2 },
-      { partNumber: '2x2', color: '白色', quantity: 80, pricePerUnit: 0.6 }
-    ],
-    createdAt: new Date('2025-12-02'),
-    status: 'available'
-  },
-  // 求購
-  {
-    id: 3,
-    userId: 3,
-    username: 'BuilderPro',
-    type: 'buy',
-    items: [
-      { partNumber: '3023', color: '綠色', quantity: 40, pricePerUnit: 0.9 }
-    ],
-    createdAt: new Date('2025-12-03'),
-    status: 'available'
-  },
-  {
-    id: 4,
-    userId: 1,
-    username: 'LegoFan123',
-    type: 'buy',
-    items: [
-      { partNumber: '3001', color: '透明', quantity: 100, pricePerUnit: 1.5 },
-      { partNumber: '2x6', color: '紅色', quantity: 50, pricePerUnit: 2.0 }
-    ],
-    createdAt: new Date('2025-12-03'),
     status: 'available'
   }
 ];

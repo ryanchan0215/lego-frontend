@@ -4,7 +4,7 @@ import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
 import EarnTokenModal from './EarnTokenModal';
-import ContactSupportModal from './ContactSupportModal';  // ← 新增
+import ContactSupportModal from './ContactSupportModal';
 
 function Header({ 
   currentUser, 
@@ -20,7 +20,7 @@ function Header({
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showMyPosts, setShowMyPosts] = useState(false);
   const [showEarnToken, setShowEarnToken] = useState(false);
-  const [showContactSupport, setShowContactSupport] = useState(false);  // ← 新增
+  const [showContactSupport, setShowContactSupport] = useState(false);
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -84,13 +84,14 @@ function Header({
       <header className="header-container">
         <div className="header-content">
           <div className="header-logo">
-            <h1>🧱 樂高產品交易平台</h1>
+            {/* ✅ 改 logo 文字 */}
+            <h1>👶 嬰幼兒產品交易平台</h1>
           </div>
 
           <div className="header-buttons">
             {currentUser ? (
               <>
-                {/* 聯絡客服按鈕 - 放喺最左 */}
+                {/* 聯絡客服按鈕 */}
                 <button
                   onClick={() => setShowContactSupport(true)}
                   style={{
@@ -413,7 +414,7 @@ function Header({
               </>
             ) : (
               <>
-                {/* 未登入狀態都可以聯絡客服 */}
+                {/* 未登入狀態 */}
                 <button
                   onClick={() => setShowContactSupport(true)}
                   style={{
@@ -514,7 +515,6 @@ function Header({
         />
       )}
 
-      {/* 新增：聯絡客服 Modal */}
       {showContactSupport && (
         <ContactSupportModal
           currentUser={currentUser}

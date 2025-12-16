@@ -1,6 +1,6 @@
-import { X, Plus, Trash2, DollarSign, ShoppingCart, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, DollarSign, ShoppingCart, Upload } from 'lucide-react';
 import { useState } from 'react';
-import { COLORS } from '../data/mockData';
+import { CATEGORIES, CONDITIONS } from '../data/mockData';  // ✅ 移除 COLORS
 import { compressImage, uploadToSupabase } from '../utils/imageCompression';
 import ImageLightbox from './ImageLightbox';
 
@@ -9,18 +9,18 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
   const [items, setItems] = useState([
     { 
       id: 1, 
-      partNumber: '', 
-      color: '', 
-      quantity: '', 
-      pricePerUnit: '',
+      itemDescription: '',     // ✅ 改
+      category: '',            // ✅ 改
+      brand: '',               // ✅ 改（非必填）
       condition: '',
+      pricePerUnit: '',        // ✅ 改
       imageUrl: null,
       imageFile: null,
       uploading: false
     }
   ]);
   
-  const [customColors, setCustomColors] = useState({});
+  const [customCategories, setCustomCategories] = useState({});  // ✅ 改
   const [customConditions, setCustomConditions] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
@@ -30,11 +30,11 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
       ...items,
       { 
         id: Date.now(), 
-        partNumber: '', 
-        color: '', 
-        quantity: '', 
-        pricePerUnit: '',
+        itemDescription: '', 
+        category: '', 
+        brand: '',
         condition: '',
+        pricePerUnit: '',
         imageUrl: null,
         imageFile: null,
         uploading: false
@@ -44,20 +44,19 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
 
   const removeItem = (id) => {
     if (items.length === 1) {
-      alert('至少要有一個配件！');
+      alert('至少要有一個物品！');
       return;
     }
     setItems(items.filter(item => item.id !== id));
     
-    const newCustomColors = {...customColors};
+    const newCustomCategories = {...customCategories};
     const newCustomConditions = {...customConditions};
-    delete newCustomColors[id];
+    delete newCustomCategories[id];
     delete newCustomConditions[id];
-    setCustomColors(newCustomColors);
+    setCustomCategories(newCustomCategories);
     setCustomConditions(newCustomConditions);
   };
 
-  // ✅ 改用 prevItems callback
   const updateItem = (id, field, value) => {
     setItems(prevItems =>
       prevItems.map(item => 
@@ -66,17 +65,15 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     );
   };
 
-  // ✅ 重寫 handleImageUpload - 一次過 update 晒
+  // ✅ handleImageUpload 保持不變
   const handleImageUpload = async (id, file) => {
     if (!file) return;
 
-    // 檢查檔案類型
     if (!file.type.startsWith('image/')) {
       alert('請上傳圖片檔案！');
       return;
     }
 
-    // ✅ 先設定 uploading = true
     setItems(prevItems =>
       prevItems.map(item =>
         item.id === id ? { ...item, uploading: true } : item
@@ -84,23 +81,20 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     );
 
     try {
-      // 1. 壓縮圖片
       const originalSizeKB = (file.size / 1024).toFixed(2);
       console.log(`原始大小: ${originalSizeKB} KB`);
 
       let processedFile = file;
-      if (file.size > 1000 * 1024) { // 如果大過 1MB
+      if (file.size > 1000 * 1024) {
         console.log('圖片太大，開始壓縮...');
         processedFile = await compressImage(file, 1000);
         const compressedSizeKB = (processedFile.size / 1024).toFixed(2);
         console.log(`壓縮後大小: ${compressedSizeKB} KB`);
       }
 
-      // 2. Upload 到 Supabase
       const imageUrl = await uploadToSupabase(processedFile);
       console.log('✅ Upload 成功:', imageUrl);
 
-      // 3. ✅ 一次過 update 晒所有 fields
       setItems(prevItems => {
         const updated = prevItems.map(item =>
           item.id === id 
@@ -113,13 +107,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
             : item
         );
         
-        console.log('📝 更新後的 items:', updated.map(i => ({
-          id: i.id,
-          partNumber: i.partNumber,
-          imageUrl: i.imageUrl,
-          uploading: i.uploading
-        })));
-        
+        console.log('📝 更新後的 items:', updated);
         return updated;
       });
 
@@ -127,7 +115,6 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
       console.error('❌ Upload 失敗:', error);
       alert('圖片上傳失敗：' + error.message);
       
-      // ✅ 失敗時都要 set uploading = false
       setItems(prevItems =>
         prevItems.map(item =>
           item.id === id ? { ...item, uploading: false } : item
@@ -136,7 +123,6 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     }
   };
 
-  // ✅ 改用 prevItems callback
   const handleRemoveImage = (id) => {
     setItems(prevItems =>
       prevItems.map(item =>
@@ -152,29 +138,28 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
     
     if (isSubmitting) return;
 
-    // ✅ 檢查有無圖片仍在上傳中
     const hasUploadingImages = items.some(item => item.uploading);
     if (hasUploadingImages) {
       alert('⏳ 請等待圖片上傳完成！');
       return;
     }
     
+    // ✅ 驗證：產品資料、種類、新舊、價錢 必填；品牌非必填
     const isValid = items.every(item => 
-      item.partNumber && 
-      item.color && 
-      item.quantity && 
-      item.pricePerUnit &&
-      item.condition
+      item.itemDescription &&    // ✅ 改
+      item.category &&           // ✅ 改
+      item.condition &&
+      item.pricePerUnit !== ''   // ✅ 改：允許 $0
     );
     
     if (!isValid) {
-      alert('請填寫所有欄位！');
+      alert('請填寫所有必填欄位（品牌可留空）！');
       return;
     }
 
     for (const item of items) {
-      if (item.color === '其他' && !customColors[item.id]) {
-        alert('請輸入自訂顏色！');
+      if (item.category === '其他' && !customCategories[item.id]) {
+        alert('請輸入自訂種類！');
         return;
       }
       if (item.condition === '其他' && !customConditions[item.id]) {
@@ -183,22 +168,14 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
       }
     }
 
-    // ✅ Debug: 睇下 submit 時嘅 items state
-    console.log('🔍 Submit 時的 items:', items.map(item => ({
-      id: item.id,
-      partNumber: item.partNumber,
-      imageUrl: item.imageUrl,
-      uploading: item.uploading
-    })));
-
     const postData = {
       type: type,
       items: items.map(item => ({
-        part_number: item.partNumber,
-        color: item.color === '其他' ? customColors[item.id] : item.color,
-        quantity: parseInt(item.quantity),
-        price_per_unit: parseFloat(item.pricePerUnit),
+        item_description: item.itemDescription,  // ✅ 改
+        category: item.category === '其他' ? customCategories[item.id] : item.category,  // ✅ 改
+        brand: item.brand || null,               // ✅ 改：品牌可以係 null
         condition: item.condition === '其他' ? customConditions[item.id] : item.condition,
+        price_per_unit: parseFloat(item.pricePerUnit),  // ✅ 改：移除 quantity
         image_url: item.imageUrl || null
       })),
       contact_info: null,
@@ -249,7 +226,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
             overflowY: 'auto'
           }}
         >
-          {/* Header */}
+          {/* Header - 保持不變 */}
           <div className="modal-header" style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -267,7 +244,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 margin: 0,
                 wordBreak: 'break-word'
               }}>
-                發佈交易
+                🍼 發佈親子用品
               </h2>
               <p style={{ 
                 fontSize: '14px', 
@@ -275,7 +252,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                 marginTop: '4px',
                 wordBreak: 'break-word'
               }}>
-                可以一次過發佈多個配件
+                可以一次過發佈多個物品
               </p>
             </div>
             <button
@@ -302,7 +279,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* 出售/求購切換 */}
+            {/* 出售/求購切換 - 保持不變 */}
             <div className="type-selector" style={{ 
               display: 'flex', 
               gap: '12px', 
@@ -362,7 +339,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
             {/* ✅ 桌面版：Table Header */}
             <div className="table-header-desktop" style={{
               display: 'grid',
-              gridTemplateColumns: '80px 1.5fr 1fr 0.8fr 0.8fr 1fr 60px',
+              gridTemplateColumns: '80px 2fr 1fr 1fr 1fr 1fr 60px',  // ✅ 改
               gap: '12px',
               marginBottom: '12px',
               padding: '12px',
@@ -373,13 +350,14 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               color: '#374151'
             }}>
               <div>圖片</div>
-              <div>產品編號</div>
-              <div>顏色</div>
+              <div>產品資料</div>          {/* ✅ 改 */}
+              <div>種類</div>              {/* ✅ 改 */}
+              <div>品牌（如有）</div>      {/* ✅ 改 */}
               <div>新舊</div>
-              <div>數量</div>
-              <div>{type === 'sell' ? '售價' : '求購價'}/1 (HK$)</div>
+              <div>{type === 'sell' ? '售價' : '求購價'} (HK$)</div>  {/* ✅ 改 */}
               <div></div>
             </div>
+
 
             {/* 配件列表 */}
             <div style={{ marginBottom: '16px' }}>
@@ -390,7 +368,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                     className="item-row-desktop"
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '80px 1.5fr 1fr 0.8fr 0.8fr 1fr 60px',
+                      gridTemplateColumns: '80px 2fr 1fr 1fr 1fr 1fr 60px',  // ✅ 改
                       gap: '12px',
                       marginBottom: '8px',
                       padding: '12px',
@@ -400,13 +378,13 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       alignItems: 'center'
                     }}
                   >
-                    {/* ✅ 圖片上傳區 */}
+                    {/* 圖片上傳區 - 保持不變 */}
                     <div style={{ position: 'relative' }}>
                       {item.imageUrl ? (
                         <div style={{ position: 'relative' }}>
                           <img
                             src={item.imageUrl}
-                            alt="配件圖片"
+                            alt="物品圖片"
                             style={{
                               width: '80px',
                               height: '80px',
@@ -485,35 +463,37 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       )}
                     </div>
 
-                    {/* 配件編號 */}
-                    <input
-                      type="text"
+                    {/* ✅ 產品資料（大輸入框） */}
+                    <textarea
                       required
-                      value={item.partNumber}
-                      onChange={(e) => updateItem(item.id, 'partNumber', e.target.value)}
+                      value={item.itemDescription}
+                      onChange={(e) => updateItem(item.id, 'itemDescription', e.target.value)}
+                      rows="2"
                       style={{
                         padding: '10px 12px',
                         border: '1px solid #d1d5db',
                         borderRadius: '6px',
                         fontSize: '14px',
                         boxSizing: 'border-box',
-                        width: '100%'
+                        width: '100%',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
                       }}
-                      placeholder="例如：3001"
+                      placeholder="例如：Chicco 嬰兒車，輕便可摺疊，帶遮陽罩"
                     />
 
-                    {/* 顏色 */}
+                    {/* ✅ 種類 */}
                     <select
                       required
-                      value={item.color}
+                      value={item.category}
                       onChange={(e) => {
                         const value = e.target.value;
-                        updateItem(item.id, 'color', value);
+                        updateItem(item.id, 'category', value);
                         
                         if (value !== '其他') {
-                          const newCustomColors = {...customColors};
-                          delete newCustomColors[item.id];
-                          setCustomColors(newCustomColors);
+                          const newCustomCategories = {...customCategories};
+                          delete newCustomCategories[item.id];
+                          setCustomCategories(newCustomCategories);
                         }
                       }}
                       style={{
@@ -526,14 +506,28 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       }}
                     >
                       <option value="">選擇...</option>
-                      {COLORS.map(color => (
-                        <option key={color} value={color}>{color}</option>
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
-                      <option value="不適用">不適用</option>
-                      <option value="其他">其他</option>
                     </select>
 
-                    {/* 新舊 */}
+                    {/* ✅ 品牌（非必填） */}
+                    <input
+                      type="text"
+                      value={item.brand}
+                      onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
+                      style={{
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                        width: '100%'
+                      }}
+                      placeholder="例如：Chicco"
+                    />
+
+                    {/* 新舊 - 保持不變 */}
                     <select
                       required
                       value={item.condition}
@@ -557,38 +551,16 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       }}
                     >
                       <option value="">選擇...</option>
-                      <option value="全新">全新</option>
-                      <option value="9成新">9成新</option>
-                      <option value="8成新">8成新</option>
-                      <option value="7成新">7成新</option>
-                      <option value="6成新">6成新</option>
-                      <option value="5成新或以下">5成新或以下</option>
-                      <option value="其他">其他</option>
+                      {CONDITIONS.map(cond => (
+                        <option key={cond} value={cond}>{cond}</option>
+                      ))}
                     </select>
 
-                    {/* 數量 */}
+                    {/* ✅ 價錢（允許 $0） */}
                     <input
                       type="number"
                       required
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                      style={{
-                        padding: '10px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box',
-                        width: '100%'
-                      }}
-                      placeholder="0"
-                    />
-
-                    {/* 價錢 */}
-                    <input
-                      type="number"
-                      required
-                      min="0.01"
+                      min="0"
                       step="0.01"
                       value={item.pricePerUnit}
                       onChange={(e) => updateItem(item.id, 'pricePerUnit', e.target.value)}
@@ -603,7 +575,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       placeholder="0.00"
                     />
 
-                    {/* 刪除按鈕 */}
+                    {/* 刪除按鈕 - 保持不變 */}
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
@@ -648,13 +620,13 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                         color: '#374151',
                         marginBottom: '6px'
                       }}>
-                        配件圖片
+                        物品圖片
                       </label>
                       {item.imageUrl ? (
                         <div style={{ position: 'relative', width: 'fit-content' }}>
                           <img
                             src={item.imageUrl}
-                            alt="配件圖片"
+                            alt="物品圖片"
                             style={{
                               width: '100px',
                               height: '100px',
@@ -733,7 +705,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       )}
                     </div>
 
-                    {/* 配件編號 */}
+                    {/* ✅ 產品資料 */}
                     <div style={{ marginBottom: '12px' }}>
                       <label style={{
                         display: 'block',
@@ -742,26 +714,28 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                         color: '#374151',
                         marginBottom: '6px'
                       }}>
-                        產品編號/詳情
+                        產品資料
                       </label>
-                      <input
-                        type="text"
+                      <textarea
                         required
-                        value={item.partNumber}
-                        onChange={(e) => updateItem(item.id, 'partNumber', e.target.value)}
+                        value={item.itemDescription}
+                        onChange={(e) => updateItem(item.id, 'itemDescription', e.target.value)}
+                        rows="3"
                         style={{
                           width: '100%',
                           padding: '10px 12px',
                           border: '1px solid #d1d5db',
                           borderRadius: '6px',
                           fontSize: '14px',
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
+                          resize: 'vertical',
+                          fontFamily: 'inherit'
                         }}
-                        placeholder="例如：3001"
+                        placeholder="例如：Chicco 嬰兒車，輕便可摺疊，帶遮陽罩"
                       />
                     </div>
 
-                    {/* 顏色 + 新舊 (2欄) */}
+                    {/* ✅ 種類 + 品牌 (2欄) */}
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 1fr',
@@ -776,19 +750,19 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           color: '#374151',
                           marginBottom: '6px'
                         }}>
-                          顏色
+                          種類
                         </label>
                         <select
                           required
-                          value={item.color}
+                          value={item.category}
                           onChange={(e) => {
                             const value = e.target.value;
-                            updateItem(item.id, 'color', value);
+                            updateItem(item.id, 'category', value);
                             
                             if (value !== '其他') {
-                              const newCustomColors = {...customColors};
-                              delete newCustomColors[item.id];
-                              setCustomColors(newCustomColors);
+                              const newCustomCategories = {...customCategories};
+                              delete newCustomCategories[item.id];
+                              setCustomCategories(newCustomCategories);
                             }
                           }}
                           style={{
@@ -801,14 +775,46 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           }}
                         >
                           <option value="">選擇...</option>
-                          {COLORS.map(color => (
-                            <option key={color} value={color}>{color}</option>
+                          {CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
                           ))}
-                          <option value="不適用">不適用</option>
-                          <option value="其他">其他</option>
                         </select>
                       </div>
 
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          marginBottom: '6px'
+                        }}>
+                          品牌（如有）
+                        </label>
+                        <input
+                          type="text"
+                          value={item.brand}
+                          onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                          }}
+                          placeholder="例如：Chicco"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ✅ 新舊 + 價錢 (2欄) */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '12px',
+                      marginBottom: '12px'
+                    }}>
                       <div>
                         <label style={{
                           display: 'block',
@@ -842,51 +848,11 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           }}
                         >
                           <option value="">選擇...</option>
-                          <option value="全新">全新</option>
-                          <option value="9成新">9成新</option>
-                          <option value="8成新">8成新</option>
-                          <option value="7成新">7成新</option>
-                          <option value="6成新">6成新</option>
-                          <option value="5成新或以下">5成新或以下</option>
-                          <option value="其他">其他</option>
+                          {CONDITIONS.map(cond => (
+                            <option key={cond} value={cond}>{cond}</option>
+                          ))}
                         </select>
                       </div>
-                    </div>
-
-                    {/* 數量 + 價錢 (2欄) */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '12px',
-                      marginBottom: '12px'
-                    }}>
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '6px'
-                        }}>
-                          數量
-                        </label>
-                        <input
-                          type="number"
-                          required
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            boxSizing: 'border-box'
-                          }}
-                          placeholder="0"
-                        />
-                      </div>
 
                       <div>
                         <label style={{
@@ -896,12 +862,12 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                           color: '#374151',
                           marginBottom: '6px'
                         }}>
-                          {type === 'sell' ? '售價' : '求購價'}/1
+                          {type === 'sell' ? '售價' : '求購價'}
                         </label>
                         <input
                           type="number"
                           required
-                          min="0.01"
+                          min="0"
                           step="0.01"
                           value={item.pricePerUnit}
                           onChange={(e) => updateItem(item.id, 'pricePerUnit', e.target.value)}
@@ -940,13 +906,13 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                         }}
                       >
                         <Trash2 size={16} />
-                        移除此配件
+                        移除此物品
                       </button>
                     )}
                   </div>
 
-                  {/* 自訂顏色輸入框 */}
-                  {item.color === '其他' && (
+                  {/* ✅ 自訂種類輸入框 */}
+                  {item.category === '其他' && (
                     <div className="custom-input" style={{
                       marginTop: '-4px',
                       marginBottom: '8px',
@@ -955,12 +921,12 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                       <input
                         type="text"
                         required
-                        value={customColors[item.id] || ''}
-                        onChange={(e) => setCustomColors({
-                          ...customColors,
+                        value={customCategories[item.id] || ''}
+                        onChange={(e) => setCustomCategories({
+                          ...customCategories,
                           [item.id]: e.target.value
                         })}
-                        placeholder="✏️ 請輸入顏色名稱（例如：淺灰色）"
+                        placeholder="✏️ 請輸入種類名稱（例如：揹巾）"
                         style={{
                           width: '100%',
                           padding: '10px 12px',
@@ -974,7 +940,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                     </div>
                   )}
 
-                  {/* 自訂新舊輸入框 */}
+                  {/* 自訂新舊輸入框 - 保持不變 */}
                   {item.condition === '其他' && (
                     <div className="custom-input" style={{
                       marginTop: '-4px',
@@ -1006,7 +972,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               ))}
             </div>
 
-            {/* 新增配件按鈕 */}
+            {/* 新增物品按鈕 */}
             <button
               type="button"
               onClick={addItem}
@@ -1036,7 +1002,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
               }}
             >
               <Plus size={20} />
-              新增配件
+              新增物品
             </button>
 
             {/* 底部按鈕 */}
@@ -1107,7 +1073,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                     ? '⏳ 圖片上傳中...' 
                     : isSubmitting 
                       ? '發佈中...' 
-                      : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 個配件)`
+                      : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 件物品)`
                   }
                 </span>
               </button>

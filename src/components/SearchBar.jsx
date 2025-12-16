@@ -1,217 +1,152 @@
-import { Search, ShoppingCart, DollarSign } from 'lucide-react';
-import { COLORS } from '../data/mockData';
+import { Search, Filter } from 'lucide-react';
 
-function SearchBar({ activeTab, onTabChange, searchTerm, onSearchChange, filters, onFilterChange }) {
+function SearchBar({ 
+  activeTab, 
+  onTabChange, 
+  searchTerm, 
+  onSearchChange,
+  filters,
+  onFilterChange
+}) {
+  const handleSearch = (e) => {
+    onSearchChange(e.target.value);
+  };
+
   return (
-    <div>
-      {/* Tab Navigation */}
+    <>
+      {/* Tabs */}
       <div className="searchbar-tabs">
         <div className="searchbar-tabs-content">
-          {/* 出售 Tab */}
+          <button
+            onClick={() => onTabChange('')}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: !activeTab ? '#3b82f6' : 'transparent',
+              color: !activeTab ? 'white' : '#6b7280',
+              border: 'none',
+              borderBottom: !activeTab ? '3px solid #2563eb' : '3px solid transparent',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+          >
+            全部
+          </button>
           <button
             onClick={() => onTabChange('sell')}
             style={{
-              padding: '14px 24px',
-              backgroundColor: activeTab === 'sell' ? '#10b981' : 'transparent',
+              padding: '12px 24px',
+              backgroundColor: activeTab === 'sell' ? '#3b82f6' : 'transparent',
               color: activeTab === 'sell' ? 'white' : '#6b7280',
               border: 'none',
-              borderBottom: activeTab === 'sell' ? '3px solid #059669' : '3px solid transparent',
-              fontSize: '15px',
-              fontWeight: '600',
+              borderBottom: activeTab === 'sell' ? '3px solid #2563eb' : '3px solid transparent',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
               transition: 'all 0.2s'
             }}
-            onMouseOver={(e) => {
-              if (activeTab !== 'sell') {
-                e.target.style.backgroundColor = '#f3f4f6';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (activeTab !== 'sell') {
-                e.target.style.backgroundColor = 'transparent';
-              }
-            }}
           >
-            <DollarSign size={18} />
-            出售
+            💰 出售
           </button>
-
-          {/* 求購 Tab */}
           <button
             onClick={() => onTabChange('buy')}
             style={{
-              padding: '14px 24px',
+              padding: '12px 24px',
               backgroundColor: activeTab === 'buy' ? '#3b82f6' : 'transparent',
               color: activeTab === 'buy' ? 'white' : '#6b7280',
               border: 'none',
               borderBottom: activeTab === 'buy' ? '3px solid #2563eb' : '3px solid transparent',
-              fontSize: '15px',
-              fontWeight: '600',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
               transition: 'all 0.2s'
             }}
-            onMouseOver={(e) => {
-              if (activeTab !== 'buy') {
-                e.target.style.backgroundColor = '#f3f4f6';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (activeTab !== 'buy') {
-                e.target.style.backgroundColor = 'transparent';
-              }
-            }}
           >
-            <ShoppingCart size={18} />
-            求購
+            🛒 求購
           </button>
         </div>
       </div>
 
-      {/* 搜尋 + 篩選區 */}
+      {/* Filters */}
       <div className="searchbar-filters-wrapper">
         <div className="searchbar-filters-content">
           <div className="searchbar-filters-grid">
-            {/* 關鍵字搜尋 */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                🔍 關鍵字搜尋
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Search 
-                  size={20} 
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#9ca3af'
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="搜尋產品編號、顏色或用戶..."
-                  value={searchTerm}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px 10px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                />
-              </div>
-            </div>
-
-            {/* 配件編號篩選 */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                🧩 產品編號
-              </label>
+            {/* 搜尋框 */}
+            <div style={{ position: 'relative' }}>
+              <Search 
+                size={18} 
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af'
+                }}
+              />
               <input
                 type="text"
-                placeholder="例如：3001"
-                value={filters.partNumber || ''}
-                onChange={(e) => onFilterChange({ ...filters, partNumber: e.target.value })}
+                placeholder="🔍 搜尋產品資料、種類、品牌..."
+                value={searchTerm}
+                onChange={handleSearch}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
+                  padding: '12px 12px 12px 42px',
+                  border: '2px solid #e5e7eb',
                   borderRadius: '8px',
                   fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  outline: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
               />
             </div>
 
-            {/* 顏色篩選 */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                🎨 顏色
-              </label>
-              <select
-                value={filters.color || ''}
-                onChange={(e) => onFilterChange({ ...filters, color: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  cursor: 'pointer'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-              >
-                <option value="">全部顏色</option>
-                {COLORS.map(color => (
-                  <option key={color} value={color}>{color}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* 清除篩選按鈕 */}
-          {(searchTerm || filters.partNumber || filters.color) && (
-            <button
-              onClick={() => {
-                onSearchChange('');
-                onFilterChange({ partNumber: '', color: '' });
-              }}
+            {/* ✅ 產品資料篩選 (item_description) */}
+            <input
+              type="text"
+              placeholder="🧱 產品資料"
+              value={filters.itemDescription || ''}
+              onChange={(e) => onFilterChange({ ...filters, itemDescription: e.target.value })}
               style={{
-                marginTop: '12px',
-                padding: '8px 16px',
-                backgroundColor: '#f3f4f6',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: '500',
-                cursor: 'pointer'
+                padding: '12px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '14px',
+                outline: 'none'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+            />
+
+            {/* ✅ 種類篩選 (category) */}
+            <select
+              value={filters.category || ''}
+              onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
+              style={{
+                padding: '12px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
             >
-              ✕ 清除所有篩選
-            </button>
-          )}
+              <option value="">📂 所有種類</option>
+              <option value="電子產品">電子產品</option>
+              <option value="家居用品">家居用品</option>
+              <option value="服裝配飾">服裝配飾</option>
+              <option value="運動用品">運動用品</option>
+              <option value="書籍文具">書籍文具</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

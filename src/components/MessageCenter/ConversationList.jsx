@@ -164,8 +164,8 @@ function ConversationList({ conversations, selectedConversation, onSelectConvers
                   </div>
                 </div>
 
-                {/* 配件資訊 */}
-                {item.part_number && (
+                {/* ✅ 產品資訊（新 DB 欄位） */}
+                {item.item_description && (
                   <div 
                     className="conversation-part-number"
                     style={{
@@ -173,10 +173,12 @@ function ConversationList({ conversations, selectedConversation, onSelectConvers
                       color: '#3b82f6',
                       fontWeight: '600',
                       marginBottom: '4px',
-                      fontFamily: 'monospace'
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    📦 #{item.part_number} {item.color} ×{item.quantity} | ${(item.quantity * item.price_per_unit).toFixed(2)}
+                    📦 {item.item_description} · {item.category} · ${item.price_per_unit?.toFixed(2) || '0.00'}
                   </div>
                 )}
 

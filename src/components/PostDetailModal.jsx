@@ -7,12 +7,8 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
 
-  const getTotalQuantity = () => {
-    return post.items.reduce((sum, item) => sum + item.quantity, 0);
-  };
-
   const getTotalValue = () => {
-    return post.items.reduce((sum, item) => sum + (item.quantity * item.price_per_unit), 0);
+    return post.items.reduce((sum, item) => sum + item.price_per_unit, 0);
   };
 
   const formatDate = (dateString) => {
@@ -28,21 +24,7 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
 
   const getConditionDisplay = (condition) => {
     if (!condition) return null;
-    
-    const standardConditions = ['new', 'like_new', 'good', 'fair', 'other'];
-    
-    if (!standardConditions.includes(condition)) {
-      return condition;
-    }
-    
-    const map = {
-      'new': '🆕 全新',
-      'like_new': '✨ 如新',
-      'good': '👍 良好',
-      'fair': '👌 尚可',
-      'other': '❓ 其他'
-    };
-    return map[condition] || condition;
+    return condition;
   };
 
   const handleContactSeller = () => {
@@ -169,7 +151,7 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
             overflow: 'auto',
             padding: '24px'
           }}>
-            {/* 配件列表 */}
+            {/* 產品列表 */}
             <div>
               <h3 style={{
                 fontSize: '16px',
@@ -181,7 +163,7 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                 gap: '8px'
               }}>
                 <Package size={18} color="#3b82f6" />
-                配件清單
+                產品清單
               </h3>
 
               <div style={{ display: 'grid', gap: '12px' }}>
@@ -200,7 +182,7 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                       <div style={{ marginBottom: '12px' }}>
                         <img
                           src={item.image_url}
-                          alt={`配件 ${item.part_number}`}
+                          alt={`產品 ${item.item_description}`}
                           style={{
                             width: '100px',
                             height: '100px',
@@ -214,22 +196,24 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                       </div>
                     )}
 
+                    {/* ✅ 產品資料 */}
+                    <div style={{
+                      fontSize: '15px',
+                      fontWeight: '700',
+                      color: '#1f2937',
+                      marginBottom: '8px',
+                      wordBreak: 'break-word'
+                    }}>
+                      {item.item_description || '未知產品'}
+                    </div>
+
                     <div style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px',
                       flexWrap: 'wrap',
-                      gap: '8px'
+                      gap: '8px',
+                      marginBottom: '8px'
                     }}>
-                      <span style={{
-                        fontWeight: '700',
-                        fontFamily: 'monospace',
-                        color: '#1f2937',
-                        fontSize: '16px'
-                      }}>
-                        #{item.part_number}
-                      </span>
+                      {/* ✅ 種類 */}
                       <span style={{
                         padding: '4px 12px',
                         backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
@@ -238,10 +222,26 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                         fontSize: '12px',
                         fontWeight: '600'
                       }}>
-                        {item.color}
+                        📂 {item.category}
                       </span>
+
+                      {/* ✅ 品牌（如果有） */}
+                      {item.brand && (
+                        <span style={{
+                          padding: '4px 12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                          color: '#1f2937',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          border: '1px solid rgba(0, 0, 0, 0.1)'
+                        }}>
+                          🏷️ {item.brand}
+                        </span>
+                      )}
                     </div>
 
+                    {/* ✅ 新舊程度（如果有） */}
                     {item.condition && getConditionDisplay(item.condition) && (
                       <div style={{
                         fontSize: '13px',
@@ -257,22 +257,14 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                       </div>
                     )}
 
+                    {/* ✅ 價錢 */}
                     <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                      gap: '8px',
-                      fontSize: '14px',
-                      color: '#1f2937'
+                      fontSize: '20px',
+                      fontWeight: '700',
+                      color: '#10b981',
+                      marginTop: '8px'
                     }}>
-                      <span>數量：<strong>×{item.quantity}</strong></span>
-                      <span>單價：<strong>${item.price_per_unit}/件</strong></span>
-                      <span style={{
-                        fontWeight: '700',
-                        color: '#10b981',
-                        fontSize: '16px'
-                      }}>
-                        ${(item.quantity * item.price_per_unit).toFixed(2)}
-                      </span>
+                      HK${item.price_per_unit?.toFixed(2) || '0.00'}
                     </div>
                   </div>
                 ))}
@@ -293,7 +285,7 @@ function PostDetailModal({ post, currentUser, onClose, onLike }) {
                     flexWrap: 'wrap',
                     gap: '12px'
                   }}>
-                    <span>📦 總計：{getTotalQuantity()} 件</span>
+                    <span>📦 總計：{post.items.length} 項產品</span>
                     <span style={{ fontSize: '24px' }}>
                       HK${getTotalValue().toFixed(2)}
                     </span>

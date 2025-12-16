@@ -10,7 +10,7 @@ import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
 import PromotionBanner from './components/PromotionBanner';
-import BulkSalePromo from './components/BulkSalePromo'; // ✅ 加呢行！
+import BulkSalePromo from './components/BulkSalePromo';
 
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('sell');
-  const [filters, setFilters] = useState({ partNumber: '', color: '' });
+  const [filters, setFilters] = useState({ itemDescription: '', category: '' }); // ✅ 改名
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -69,6 +69,7 @@ function App() {
     }
   };
 
+  // ✅ 改用新 DB 欄位名
   useEffect(() => {
     let filtered = posts;
 
@@ -81,66 +82,65 @@ function App() {
       filtered = filtered.filter(post =>
         post.username?.toLowerCase().includes(query) ||
         post.items?.some(item => 
-          item.part_number?.toLowerCase().includes(query) ||
-          item.color?.toLowerCase().includes(query)
+          item.item_description?.toLowerCase().includes(query) || // ✅ 改名
+          item.category?.toLowerCase().includes(query) ||          // ✅ 改名
+          item.brand?.toLowerCase().includes(query)                // ✅ 新增
         )
       );
     }
 
-    if (filters.partNumber) {
+    if (filters.itemDescription) { // ✅ 改名
       filtered = filtered.filter(post =>
         post.items?.some(item => 
-          item.part_number?.toLowerCase().includes(filters.partNumber.toLowerCase())
+          item.item_description?.toLowerCase().includes(filters.itemDescription.toLowerCase()) // ✅ 改名
         )
       );
     }
 
-    if (filters.color) {
+    if (filters.category) { // ✅ 改名
       filtered = filtered.filter(post =>
-        post.items?.some(item => item.color === filters.color)
+        post.items?.some(item => item.category === filters.category) // ✅ 改名
       );
     }
 
     setFilteredPosts(filtered);
   }, [searchQuery, activeTab, filters, posts]);
 
-const handleLogin = async (username, password) => {
-  try {
-    const result = await authAPI.login({ username, password });
-    setCurrentUser(result.user);
-    setShowLogin(false);
-    alert(`歡迎返嚟，${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
-    
-    // ✅ loadPosts 失敗唔應該影響登入成功
+  const handleLogin = async (username, password) => {
     try {
-      await loadPosts();
-    } catch (err) {
-      console.error('重新載入帖子失敗:', err);
+      const result = await authAPI.login({ username, password });
+      setCurrentUser(result.user);
+      setShowLogin(false);
+      alert(`歡迎返嚟，${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+      
+      try {
+        await loadPosts();
+      } catch (err) {
+        console.error('重新載入帖子失敗:', err);
+      }
+    } catch (error) {
+      alert('登入失敗：' + error.message);
+      throw error;
     }
-  } catch (error) {
-    alert('登入失敗：' + error.message);
-    throw error;
-  }
-};
+  };
 
-const handleRegister = async (userData) => {
-  try {
-    const result = await authAPI.register(userData);
-    setCurrentUser(result.user);
-    setShowRegister(false);
-    alert(`註冊成功！歡迎 ${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
-    
-    // ✅ loadPosts 失敗唔應該影響註冊成功
+  const handleRegister = async (userData) => {
     try {
-      await loadPosts();
-    } catch (err) {
-      console.error('重新載入帖子失敗:', err);
+      const result = await authAPI.register(userData);
+      setCurrentUser(result.user);
+      setShowRegister(false);
+      alert(`註冊成功！歡迎 ${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+      
+      try {
+        await loadPosts();
+      } catch (err) {
+        console.error('重新載入帖子失敗:', err);
+      }
+    } catch (error) {
+      alert('註冊失敗：' + error.message);
+      throw error;
     }
-  } catch (error) {
-    alert('註冊失敗：' + error.message);
-    throw error;
-  }
-};
+  };
 
   const handleLogout = async () => {
     try {
@@ -153,25 +153,24 @@ const handleRegister = async (userData) => {
     }
   };
 
-const handleCreatePost = async (postData) => {
-  try {
-    await postsAPI.create(postData);
-    alert('帖子發佈成功！');
-    setShowCreatePost(false);
-    
-    // ✅ 並行執行，一個失敗唔影響另一個
-    await Promise.allSettled([
-      loadPosts(),
-      authAPI.getCurrentUser().then(user => {
-        setCurrentUser(user);
-        userManager.setUser(user);
-      })
-    ]);
-  } catch (error) {
-    alert('發佈失敗：' + error.message);
-    throw error;
-  }
-};
+  const handleCreatePost = async (postData) => {
+    try {
+      await postsAPI.create(postData);
+      alert('帖子發佈成功！');
+      setShowCreatePost(false);
+      
+      await Promise.allSettled([
+        loadPosts(),
+        authAPI.getCurrentUser().then(user => {
+          setCurrentUser(user);
+          userManager.setUser(user);
+        })
+      ]);
+    } catch (error) {
+      alert('發佈失敗：' + error.message);
+      throw error;
+    }
+  };
 
   const handleLike = async (postId) => {
     if (!currentUser) {
@@ -269,42 +268,38 @@ const handleCreatePost = async (postData) => {
           onFilterChange={setFilters}
         />
 
-<div className="content-grid">
-  {/* ✅ 左側廣告 → PromotionBanner */}
-  <div className="side-ad">
-    <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
-  </div>
+        <div className="content-grid">
+          <div className="side-ad">
+            <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+          </div>
 
-  {/* 中間內容區 */}
-  <div className="posts-grid">
-    {filteredPosts.length === 0 ? (
-      <div 
-        className="text-center py-12 bg-white rounded-lg shadow" 
-        style={{ gridColumn: '1 / -1' }}
-      >
-        <p className="text-gray-500 text-lg">
-          {searchQuery || filters.partNumber || filters.color ? '搵唔到相關帖子' : '暫時未有帖子'}
-        </p>
-      </div>
-    ) : (
-      filteredPosts.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          currentUser={currentUser}
-          onLike={handleLike}
-          onShowDetail={handleShowDetail}
-        />
-      ))
-    )}
-  </div>
+          <div className="posts-grid">
+            {filteredPosts.length === 0 ? (
+              <div 
+                className="text-center py-12 bg-white rounded-lg shadow" 
+                style={{ gridColumn: '1 / -1' }}
+              >
+                <p className="text-gray-500 text-lg">
+                  {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
+                </p>
+              </div>
+            ) : (
+              filteredPosts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  currentUser={currentUser}
+                  onLike={handleLike}
+                  onShowDetail={handleShowDetail}
+                />
+              ))
+            )}
+          </div>
 
-  {/* ✅ 右側廣告 → BulkSalePromo */}
-  <div className="side-ad">
-    <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
-  </div>
-</div>
-
+          <div className="side-ad">
+            <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+          </div>
+        </div>
       </main>
 
       <div className="bottom-ad">
