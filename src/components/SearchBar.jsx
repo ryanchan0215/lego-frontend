@@ -63,7 +63,7 @@ function SearchBar({
               transition: 'all 0.2s'
             }}
           >
-            🛒 求購
+            🛒 徵收
           </button>
         </div>
       </div>
