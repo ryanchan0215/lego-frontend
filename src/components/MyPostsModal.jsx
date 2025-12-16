@@ -382,64 +382,121 @@ function MyPostsModal({ currentUser, onClose }) {
                       display: 'grid',
                       gap: '8px'
                     }}>
-                      {post.items.map((item, index) => (
-                        <div
-                          key={index}
-                          className="item-card"
-                          style={{
-                            padding: '12px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                            borderRadius: '6px',
-                            border: '1px solid rgba(0,0,0,0.05)'
-                          }}
-                        >
-                          <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: '12px',
-                            flexWrap: 'wrap'
-                          }}>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              flexWrap: 'wrap'
-                            }}>
-                              <span style={{
-                                fontWeight: '700',
-                                fontFamily: 'monospace',
-                                color: '#1f2937',
-                                fontSize: '14px'
-                              }}>
-                                #{item.part_number}
-                              </span>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '2px 10px',
-                                backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
-                                color: 'white',
-                                borderRadius: '8px',
-                                fontSize: '11px',
-                                fontWeight: '600'
-                              }}>
-                                {item.color}
-                              </span>
-                            </div>
-                            <div style={{
-                              fontSize: '14px',
-                              color: '#1f2937',
-                              fontWeight: '600'
-                            }}>
-                              ×{item.quantity} @ ${item.price_per_unit}/件
-                              {' '}
-                              <strong style={{ marginLeft: '8px', color: '#10b981' }}>
-                                = ${(item.quantity * item.price_per_unit).toFixed(2)}
-                              </strong>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    {post.items.map((item, index) => (
+  <div
+    key={index}
+    className="item-card"
+    style={{
+      padding: '14px',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      borderRadius: '8px',
+      border: '2px solid rgba(0,0,0,0.08)'
+    }}
+  >
+    {/* ✅ 圖片 */}
+    {item.image_url && (
+      <div style={{ marginBottom: '12px' }}>
+        <img
+          src={item.image_url}
+          alt={item.item_description}
+          style={{
+            width: '100%',
+            maxHeight: '200px',
+            objectFit: 'cover',
+            borderRadius: '6px'
+          }}
+        />
+      </div>
+    )}
+
+    {/* ✅ 產品資料 */}
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: '12px',
+      flexWrap: 'wrap'
+    }}>
+      <div style={{ flex: 1 }}>
+        {/* 產品名稱 */}
+        <div style={{
+          fontWeight: '700',
+          color: '#1f2937',
+          fontSize: '15px',
+          marginBottom: '8px'
+        }}>
+          {item.item_description}
+        </div>
+
+        {/* 種類 + 品牌 + 新舊 */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
+          marginBottom: '8px'
+        }}>
+          <span style={{
+            padding: '3px 10px',
+            backgroundColor: post.type === 'sell' ? '#fbbf24' : '#60a5fa',
+            color: 'white',
+            borderRadius: '8px',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            {item.category}
+          </span>
+
+          {item.brand && (
+            <span style={{
+              padding: '3px 10px',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              🏷️ {item.brand}
+            </span>
+          )}
+
+          {item.condition && (
+            <span style={{
+              padding: '3px 10px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {item.condition}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 價錢 */}
+      <div style={{
+        textAlign: 'right',
+        minWidth: '120px'
+      }}>
+        <div style={{
+          fontSize: '13px',
+          color: '#6b7280',
+          marginBottom: '4px'
+        }}>
+          ${item.price_per_unit}/件
+        </div>
+        <div style={{
+          fontSize: '18px',
+          fontWeight: '700',
+          color: '#10b981'
+        }}>
+          HK${(item.price_per_unit).toFixed(2)}
+        </div>
+      </div>
+    </div>
+  </div>
+))}
 
                       {/* 總計 */}
                       <div style={{
