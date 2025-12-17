@@ -20,7 +20,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
  */
 async function uploadPdfToSupabase(file) {
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-  const folder = 'resources';
+  const folder = 'baby-resources';
   
   const response = await fetch(
     `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
@@ -368,76 +368,78 @@ function UploadModal({ onClose, onSuccess }) {
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!file) {
-      alert('請選擇檔案！');
-      return;
-    }
+  if (!file) {
+    alert('請選擇檔案！');
+    return;
+  }
 
-    if (file.type !== 'application/pdf') {
-      alert('只接受 PDF 檔案！');
-      return;
-    }
+  if (file.type !== 'application/pdf') {
+    alert('只接受 PDF 檔案！');
+    return;
+  }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('檔案不能超過 10MB！');
-      return;
-    }
+  if (file.size > 10 * 1024 * 1024) {
+    alert('檔案不能超過 10MB！');
+    return;
+  }
 
-    setUploading(true);
+  setUploading(true);
 
-    try {
-      console.log('📤 開始上載 PDF 到 Supabase...');
+  try {
+    console.log('📤 開始上載 PDF 到 Supabase...');
 
-      // ✅ 1. Upload 去 Supabase（用 fetch，同 imageCompression.js 一樣）
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-      const folder = 'resources';
-      
-      const uploadResponse = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': file.type
-          },
-          body: file
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.text();
-        throw new Error(`Supabase Upload 失敗: ${error}`);
-      }
-
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
-
-      console.log('✅ Supabase 上載成功:', publicUrl);
-
-      // ✅ 2. 發送去 Backend 儲存到資料庫
-      await request('/resources/upload', {
+    // ✅ Upload 到 baby-resources/resources/
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+    const bucket = 'baby-resources';
+    const subfolder = 'resources';
+    const filePath = `${subfolder}/${fileName}`;
+    
+    const uploadResponse = await fetch(
+      `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/${bucket}/${filePath}`,
+      {
         method: 'POST',
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          file_name: file.name,
-          file_path: publicUrl,
-          file_size: file.size
-        })
-      });
+        headers: {
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU`,
+          'Content-Type': file.type
+        },
+        body: file
+      }
+    );
 
-      alert('✅ 上載成功！');
-      onSuccess();
-
-    } catch (error) {
-      console.error('❌ 上載失敗:', error);
-      alert('上載失敗：' + error.message);
-    } finally {
-      setUploading(false);
+    if (!uploadResponse.ok) {
+      const error = await uploadResponse.text();
+      throw new Error(`Supabase Upload 失敗: ${error}`);
     }
-  };
+
+    const publicUrl = `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/public/${bucket}/${filePath}`;
+
+    console.log('✅ Supabase 上載成功:', publicUrl);
+
+    // ✅ 儲存到資料庫
+    await request('/resources/upload', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        file_name: file.name,
+        file_path: publicUrl,
+        file_size: file.size
+      })
+    });
+
+    alert('✅ 上載成功！');
+    onSuccess();
+
+  } catch (error) {
+    console.error('❌ 上載失敗:', error);
+    alert('上載失敗：' + error.message);
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <div
