@@ -55,6 +55,7 @@ function BulkSalePromo({ onRegisterClick }) {
           position: sticky;
           top: 100px;
           width: 180px;
+          margin-right: 20px;
           background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
           border-radius: 16px;
           padding: 24px 16px;
