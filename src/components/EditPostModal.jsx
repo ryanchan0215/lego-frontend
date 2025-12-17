@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { request } from '../api';
 
 function EditPostModal({ post, currentUser, onClose, onSuccess }) {
@@ -33,12 +33,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       return;
     }
 
-    if (currentUser.tokens < 1) {
-      alert('你的發佈次數不足，無法編輯貼文！');
-      return;
-    }
-
-    if (!confirm(`修改價錢需要消耗 1 次發佈機會\n你目前有 ${currentUser.tokens} 次機會\n確定要繼續嗎？`)) {
+    if (!confirm(`確定要儲存修改嗎？\n修改成功後可獲得 +1 Token 獎勵！`)) {
       return;
     }
 
@@ -55,7 +50,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
         body: JSON.stringify(updateData)
       });
 
-      alert(`✅ 修改成功！\n剩餘發佈次數：${result.remaining_tokens}`);
+      alert(`✅ 修改成功！\n你獲得 +1 Token 獎勵\n目前 Token 數量：${result.remaining_tokens}`);
       onSuccess();
     } catch (error) {
       console.error('❌ 編輯失敗:', error);
@@ -130,22 +125,23 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Warning */}
+        {/* ✅ 獎勵提示（改成綠色） */}
         <div 
-          className="edit-modal-warning"
+          className="edit-modal-info"
           style={{
             padding: '16px 20px',
-            backgroundColor: '#fef3c7',
-            border: '1px solid #fbbf24',
+            backgroundColor: '#d1fae5',
+            border: '1px solid #10b981',
             margin: '20px',
             borderRadius: '8px',
             display: 'flex',
-            gap: '12px'
+            gap: '12px',
+            alignItems: 'center'
           }}
         >
-          <AlertCircle size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ fontSize: '13px', color: '#92400e' }}>
-            <strong>⚠️ 注意：</strong>修改價錢需要消耗 <strong>1 次發佈機會</strong>。
+          <span style={{ fontSize: '24px' }}>🎁</span>
+          <div style={{ fontSize: '13px', color: '#065f46', fontWeight: '500' }}>
+            <strong>✨ 提示：</strong>修改價錢成功後可獲得 <strong style={{ color: '#059669' }}>+1 Token 獎勵</strong>！
           </div>
         </div>
 
@@ -208,7 +204,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <input
                         type="number"
-                        min="0.01"
+                        min="0"
                         step="0.01"
                         value={item.price_per_unit}
                         onChange={(e) => updatePrice(item.id, e.target.value)}
@@ -294,7 +290,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
               }}
             >
               <Save size={18} />
-              {hasChanges() ? '儲存修改' : '沒有修改'}
+              {hasChanges() ? '儲存修改（獎勵 +1 Token）' : '沒有修改'}
             </button>
           </div>
         </form>

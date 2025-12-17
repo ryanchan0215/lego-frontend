@@ -69,10 +69,10 @@ function PromotionBanner({ onRegisterClick }) {
               <X size={24} />
             </button>
 
-            <div className="promo-modal-badge">🔥 限時優惠 🔥</div>
+            <div className="promo-modal-badge">🔥 全新網站 🔥</div>
             
             <h2 className="promo-modal-title">
-              前 <span className="promo-modal-number">100</span> 名會員專享！
+              <span className="promo-modal-number">歡迎大家試用!</span> 
             </h2>
 
             <div className="promo-modal-benefits">
@@ -81,7 +81,7 @@ function PromotionBanner({ onRegisterClick }) {
                   <Gift size={24} color="white" />
                 </div>
                 <div className="promo-modal-text">
-                  <strong>免費獲得 100 Token</strong> 發佈次數
+                  <strong>無限</strong> 發佈次數
                 </div>
               </div>
 
@@ -90,7 +90,7 @@ function PromotionBanner({ onRegisterClick }) {
                   <Crown size={24} color="white" />
                 </div>
                 <div className="promo-modal-text">
-                  升級為 <strong>第一代會員</strong>（永久尊貴身份）
+                   <strong>永久會員</strong>
                 </div>
               </div>
 
@@ -108,7 +108,7 @@ function PromotionBanner({ onRegisterClick }) {
                   <Megaphone size={24} color="white" />
                 </div>
                 <div className="promo-modal-text">
-                  <strong>免費</strong> 在廣告區推廣你的帖子
+                  <strong>期待</strong> 你的帖子!
                 </div>
               </div>
             </div>
@@ -124,7 +124,7 @@ function PromotionBanner({ onRegisterClick }) {
             </button>
 
             <div className="promo-modal-urgency">
-              ⏰ 名額有限，先到先得！
+              ⏰ 唔好等喇！
             </div>
           </div>
         </div>

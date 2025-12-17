@@ -1143,8 +1143,7 @@ function CreatePostModal({ onClose, onCreatePost, currentUser }) {
                     ? '⏳ 圖片上傳中...' 
                     : isSubmitting 
                       ? '發佈中...' 
-                      : `// ✅ 新文字
-發佈{type === 'sell' ? '出售' : '求購'} (${items.length} 件物品，獎勵 +1 Token)`
+                      : `發佈${type === 'sell' ? '出售' : '求購'} (${items.length} 件物品)`
                   }
                 </span>
               </button>
