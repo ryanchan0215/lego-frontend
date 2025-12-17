@@ -8,6 +8,7 @@ import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
 import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
+import ResourcesPage from './components/ResourcesPage'; // ✅ 新增
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
 import PromotionBanner from './components/PromotionBanner';
 import BulkSalePromo from './components/BulkSalePromo';
@@ -19,7 +20,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('sell');
-  const [filters, setFilters] = useState({ itemDescription: '', category: '' }); // ✅ 改名
+  const [filters, setFilters] = useState({ itemDescription: '', category: '' });
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -28,6 +29,8 @@ function App() {
   const [showMessageCenter, setShowMessageCenter] = useState(false);
   const [selectedPostDetail, setSelectedPostDetail] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
+  
+  const [currentPage, setCurrentPage] = useState('home'); // ✅ 新增：頁面狀態
 
   useEffect(() => {
     initializeApp();
@@ -69,7 +72,6 @@ function App() {
     }
   };
 
-  // ✅ 改用新 DB 欄位名
   useEffect(() => {
     let filtered = posts;
 
@@ -82,24 +84,24 @@ function App() {
       filtered = filtered.filter(post =>
         post.username?.toLowerCase().includes(query) ||
         post.items?.some(item => 
-          item.item_description?.toLowerCase().includes(query) || // ✅ 改名
-          item.category?.toLowerCase().includes(query) ||          // ✅ 改名
-          item.brand?.toLowerCase().includes(query)                // ✅ 新增
+          item.item_description?.toLowerCase().includes(query) ||
+          item.category?.toLowerCase().includes(query) ||
+          item.brand?.toLowerCase().includes(query)
         )
       );
     }
 
-    if (filters.itemDescription) { // ✅ 改名
+    if (filters.itemDescription) {
       filtered = filtered.filter(post =>
         post.items?.some(item => 
-          item.item_description?.toLowerCase().includes(filters.itemDescription.toLowerCase()) // ✅ 改名
+          item.item_description?.toLowerCase().includes(filters.itemDescription.toLowerCase())
         )
       );
     }
 
-    if (filters.category) { // ✅ 改名
+    if (filters.category) {
       filtered = filtered.filter(post =>
-        post.items?.some(item => item.category === filters.category) // ✅ 改名
+        post.items?.some(item => item.category === filters.category)
       );
     }
 
@@ -256,51 +258,59 @@ function App() {
         }}
         onMessageCenterClick={handleMessageCenterClick}
         onUserUpdate={handleUserUpdate}
+        onResourcesClick={() => setCurrentPage('resources')} // ✅ 新增
+        onHomeClick={() => setCurrentPage('home')}           // ✅ 新增
       />
 
-      <main className="main-container">
-        <SearchBar 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          searchTerm={searchQuery}
-          onSearchChange={setSearchQuery}
-          filters={filters}
-          onFilterChange={setFilters}
-        />
+      {/* ✅ 根據 currentPage 顯示不同內容 */}
+      {currentPage === 'home' ? (
+        <main className="main-container">
+          <SearchBar 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            searchTerm={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onFilterChange={setFilters}
+          />
 
-        <div className="content-grid">
-          <div className="side-ad">
-            <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
-          </div>
+          <div className="content-grid">
+            <div className="side-ad">
+              <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+            </div>
 
-          <div className="posts-grid">
-            {filteredPosts.length === 0 ? (
-              <div 
-                className="text-center py-12 bg-white rounded-lg shadow" 
-                style={{ gridColumn: '1 / -1' }}
-              >
-                <p className="text-gray-500 text-lg">
-                  {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
-                </p>
-              </div>
-            ) : (
-              filteredPosts.map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  currentUser={currentUser}
-                  onLike={handleLike}
-                  onShowDetail={handleShowDetail}
-                />
-              ))
-            )}
-          </div>
+            <div className="posts-grid">
+              {filteredPosts.length === 0 ? (
+                <div 
+                  className="text-center py-12 bg-white rounded-lg shadow" 
+                  style={{ gridColumn: '1 / -1' }}
+                >
+                  <p className="text-gray-500 text-lg">
+                    {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
+                  </p>
+                </div>
+              ) : (
+                filteredPosts.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    currentUser={currentUser}
+                    onLike={handleLike}
+                    onShowDetail={handleShowDetail}
+                  />
+                ))
+              )}
+            </div>
 
-          <div className="side-ad">
-            <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+            <div className="side-ad">
+              <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      ) : (
+        // ✅ 顯示 BB 資源頁面
+        <ResourcesPage currentUser={currentUser} />
+      )}
 
       <div className="bottom-ad">
         🖼️ 底部廣告位（待申請）

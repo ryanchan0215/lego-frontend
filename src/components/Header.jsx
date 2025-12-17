@@ -1,9 +1,8 @@
-import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift, HelpCircle } from 'lucide-react';
+import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift, HelpCircle, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
-
 import ContactSupportModal from './ContactSupportModal';
 
 function Header({ 
@@ -13,13 +12,14 @@ function Header({
   onLogout, 
   onCreatePostClick,
   onMessageCenterClick,
-  onUserUpdate
+  onUserUpdate,
+  onResourcesClick,  // ✅ 新增
+  onHomeClick        // ✅ 新增
 }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showMyPosts, setShowMyPosts] = useState(false);
-
   const [showContactSupport, setShowContactSupport] = useState(false);
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
@@ -68,18 +68,44 @@ function Header({
     };
   }, [showUserMenu]);
 
-
-
   return (
     <>
       <header className="header-container">
         <div className="header-content">
-          <div className="header-logo">
-            {/* ✅ 改 logo 文字 */}
+          {/* ✅ Logo 可點擊返回主頁 */}
+          <div 
+            className="header-logo" 
+            onClick={onHomeClick}
+            style={{ cursor: 'pointer' }}
+          >
             <h1>👶 嬰幼兒產品交易平台</h1>
           </div>
 
           <div className="header-buttons">
+            {/* ✅ BB 資源按鈕（登入/未登入都顯示） */}
+            <button
+              onClick={onResourcesClick}
+              style={{
+                padding: '10px 18px',
+                backgroundColor: '#8b5cf6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#8b5cf6'}
+            >
+              <BookOpen size={18} />
+              BB 資源
+            </button>
+
             {currentUser ? (
               <>
                 {/* 聯絡客服按鈕 */}
@@ -111,7 +137,6 @@ function Header({
                   <HelpCircle size={18} />
                   聯絡客服
                 </button>
-
 
                 <div style={{ position: 'relative' }} ref={menuRef}>
                   <button
@@ -468,8 +493,6 @@ function Header({
           onClose={() => setShowMyPosts(false)}
         />
       )}
-
-  
 
       {showContactSupport && (
         <ContactSupportModal

@@ -68,12 +68,16 @@ function SearchBar({
         </div>
       </div>
 
-      {/* Filters */}
+      {/* ✅ 一行過篩選器 */}
       <div className="searchbar-filters-wrapper">
         <div className="searchbar-filters-content">
-          <div className="searchbar-filters-grid">
-            {/* ✅ 搜尋框（縮小） */}
-            <div style={{ position: 'relative', gridColumn: 'span 2' }}>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center'
+          }}>
+            {/* ✅ 搜尋框（flex-grow 自動撐滿） */}
+            <div style={{ position: 'relative', flex: 1 }}>
               <Search 
                 size={18} 
                 style={{
@@ -102,18 +106,20 @@ function SearchBar({
               />
             </div>
 
-            {/* ✅ 種類篩選（16 個選項） */}
+            {/* ✅ 種類篩選（固定寬度 200px） */}
             <select
               value={filters.category || ''}
               onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
               style={{
+                width: '200px',
                 padding: '10px 12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
                 cursor: 'pointer',
                 backgroundColor: 'white',
-                outline: 'none'
+                outline: 'none',
+                flexShrink: 0
               }}
               onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
               onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
@@ -162,21 +168,15 @@ function SearchBar({
         </div>
       </div>
 
-      {/* ✅ 響應式 CSS */}
+      {/* ✅ 手機版：變返直排 */}
       <style jsx>{`
-        .searchbar-filters-grid {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 12px;
-        }
-
         @media (max-width: 768px) {
-          .searchbar-filters-grid {
-            grid-template-columns: 1fr;
+          .searchbar-filters-content > div {
+            flex-direction: column !important;
           }
 
-          .searchbar-filters-grid > div:first-child {
-            grid-column: span 1;
+          .searchbar-filters-content select {
+            width: 100% !important;
           }
         }
       `}</style>
