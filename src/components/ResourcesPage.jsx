@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, Download, FileText, Search, X, Eye, LogIn } from 'lucide-react';
+import { Upload, Download, FileText, Search, X } from 'lucide-react';
 import { request } from '../api';
 
 const CATEGORIES = [
@@ -11,8 +11,36 @@ const CATEGORIES = [
   { value: 'safety', label: '🛡️ 安全須知', color: '#ec4899' }
 ];
 
+// ✅ Supabase 設定（Hard-coded，同 imageCompression.js 一樣）
 const SUPABASE_URL = 'https://fifgdbgibdclpztlcxog.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU';
+
+/**
+ * ✅ Upload PDF 到 Supabase（跟 imageCompression.js 一樣）
+ */
+async function uploadPdfToSupabase(file) {
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+  const folder = 'baby-resources';
+  
+  const response = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': file.type
+      },
+      body: file
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Upload 失敗: ${error}`);
+  }
+  
+  return `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
+}
 
 function ResourcesPage({ currentUser }) {
   const [resources, setResources] = useState([]);
@@ -20,8 +48,6 @@ function ResourcesPage({ currentUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [previewResource, setPreviewResource] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,21 +87,8 @@ function ResourcesPage({ currentUser }) {
     setFilteredResources(filtered);
   };
 
-  // ✅ 下載 + 記錄統計
   const handleDownload = async (resource) => {
-    // ✅ 檢查登入
-    if (!currentUser) {
-      alert('⚠️ 請先登入才能下載資源！');
-      return;
-    }
-
     try {
-      // ✅ 記錄下載統計
-      await request(`/resources/${resource.id}/download`, {
-        method: 'POST'
-      });
-
-      // ✅ 下載檔案
       const link = document.createElement('a');
       link.href = resource.file_path;
       link.download = resource.file_name;
@@ -83,24 +96,10 @@ function ResourcesPage({ currentUser }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // ✅ 更新本地下載次數
-      setResources(prev => prev.map(r =>
-        r.id === resource.id
-          ? { ...r, download_count: (r.download_count || 0) + 1 }
-          : r
-      ));
-
     } catch (error) {
       console.error('下載失敗:', error);
       alert('下載失敗');
     }
-  };
-
-  // ✅ 預覽 PDF
-  const handlePreview = (resource) => {
-    setPreviewResource(resource);
-    setShowPreviewModal(true);
   };
 
   const getCategoryInfo = (category) => {
@@ -108,7 +107,11 @@ function ResourcesPage({ currentUser }) {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div style={{
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '20px'
+    }}>
       {/* Header */}
       <div style={{
         marginBottom: '30px',
@@ -127,13 +130,12 @@ function ResourcesPage({ currentUser }) {
           }}>
             📚 BB 資源中心
           </h1>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280',
+            margin: 0
+          }}>
             免費下載育兒資源、字帖、健康指南等
-            {!currentUser && (
-              <span style={{ color: '#ef4444', fontWeight: '600' }}>
-                {' '}• 請先登入才能下載
-              </span>
-            )}
           </p>
         </div>
 
@@ -173,7 +175,12 @@ function ResourcesPage({ currentUser }) {
           <Search
             size={20}
             color="#9ca3af"
-            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)'
+            }}
           />
           <input
             type="text"
@@ -245,7 +252,8 @@ function ResourcesPage({ currentUser }) {
                   border: '2px solid #e5e7eb',
                   borderRadius: '12px',
                   padding: '20px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.borderColor = category.color;
@@ -256,16 +264,18 @@ function ResourcesPage({ currentUser }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div style={{
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  backgroundColor: category.color,
-                  color: 'white',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  marginBottom: '12px'
-                }}>
+                <div
+                  style={{
+                    display: 'inline-block',
+                    padding: '4px 12px',
+                    backgroundColor: category.color,
+                    color: 'white',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    marginBottom: '12px'
+                  }}
+                >
                   {category.label}
                 </div>
 
@@ -292,87 +302,39 @@ function ResourcesPage({ currentUser }) {
                 <div style={{
                   fontSize: '12px',
                   color: '#9ca3af',
-                  marginBottom: '12px',
+                  marginBottom: '16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  flexWrap: 'wrap'
+                  gap: '8px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <FileText size={14} />
-                    {resource.file_name}
-                  </div>
+                  <FileText size={14} />
+                  {resource.file_name}
                   {resource.file_size && (
                     <span>• {(resource.file_size / 1024).toFixed(1)} KB</span>
                   )}
-                  <span style={{ color: '#3b82f6', fontWeight: '600' }}>
-                    • {resource.download_count || 0} 次下載
-                  </span>
                 </div>
 
-                {/* ✅ 預覽 + 下載按鈕 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <button
-                    onClick={() => handlePreview(resource)}
-                    style={{
-                      padding: '10px',
-                      backgroundColor: 'white',
-                      color: category.color,
-                      border: `2px solid ${category.color}`,
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = category.color;
-                      e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                      e.currentTarget.style.color = category.color;
-                    }}
-                  >
-                    <Eye size={16} />
-                    預覽
-                  </button>
-
-                  <button
-                    onClick={() => handleDownload(resource)}
-                    disabled={!currentUser}
-                    style={{
-                      padding: '10px',
-                      backgroundColor: currentUser ? category.color : '#d1d5db',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: currentUser ? 'pointer' : 'not-allowed',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      opacity: currentUser ? 1 : 0.6
-                    }}
-                  >
-                    {currentUser ? (
-                      <>
-                        <Download size={16} />
-                        下載
-                      </>
-                    ) : (
-                      <>
-                        <LogIn size={16} />
-                        登入下載
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleDownload(resource)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: category.color,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Download size={16} />
+                  下載 PDF
+                </button>
               </div>
             );
           })}
@@ -389,149 +351,12 @@ function ResourcesPage({ currentUser }) {
           }}
         />
       )}
-
-      {/* ✅ Preview Modal */}
-      {showPreviewModal && previewResource && (
-        <PreviewModal
-          resource={previewResource}
-          onClose={() => {
-            setShowPreviewModal(false);
-            setPreviewResource(null);
-          }}
-          onDownload={() => handleDownload(previewResource)}
-          currentUser={currentUser}
-        />
-      )}
     </div>
   );
 }
 
 // ========================================
-// 👁️ PDF Preview Modal
-// ========================================
-function PreviewModal({ resource, onClose, onDownload, currentUser }) {
-  const category = CATEGORIES.find(c => c.value === resource.category) || CATEGORIES[0];
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px'
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '900px',
-          height: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '2px solid #e5e7eb',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <div style={{
-              display: 'inline-block',
-              padding: '4px 10px',
-              backgroundColor: category.color,
-              color: 'white',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: '600',
-              marginBottom: '6px'
-            }}>
-              {category.label}
-            </div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
-              {resource.title}
-            </h3>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              onClick={onDownload}
-              disabled={!currentUser}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: currentUser ? category.color : '#d1d5db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: currentUser ? 'pointer' : 'not-allowed',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                opacity: currentUser ? 1 : 0.6
-              }}
-            >
-              {currentUser ? (
-                <>
-                  <Download size={16} />
-                  下載
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  登入下載
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '8px'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <X size={24} color="#dc2626" />
-            </button>
-          </div>
-        </div>
-
-        {/* PDF Viewer */}
-        <div style={{ flex: 1, position: 'relative' }}>
-          <iframe
-            src={`${resource.file_path}#toolbar=0&navpanes=0`}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title={resource.title}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// 📤 Upload Modal
+// 📤 Upload Modal（✅ 用 fetch，唔用 supabase client）
 // ========================================
 function UploadModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -543,76 +368,78 @@ function UploadModal({ onClose, onSuccess }) {
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!file) {
-      alert('請選擇檔案！');
-      return;
-    }
+  if (!file) {
+    alert('請選擇檔案！');
+    return;
+  }
 
-    if (file.type !== 'application/pdf') {
-      alert('只接受 PDF 檔案！');
-      return;
-    }
+  if (file.type !== 'application/pdf') {
+    alert('只接受 PDF 檔案！');
+    return;
+  }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('檔案不能超過 10MB！');
-      return;
-    }
+  if (file.size > 10 * 1024 * 1024) {
+    alert('檔案不能超過 10MB！');
+    return;
+  }
 
-    setUploading(true);
+  setUploading(true);
 
-    try {
-      console.log('📤 開始上載 PDF 到 Supabase...');
+  try {
+    console.log('📤 開始上載 PDF 到 Supabase...');
 
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-      const bucket = 'baby-resources';
-      const subfolder = 'resources';
-      const filePath = `${subfolder}/${fileName}`;
-      
-      const uploadResponse = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': file.type
-          },
-          body: file
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.text();
-        throw new Error(`Supabase Upload 失敗: ${error}`);
-      }
-
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
-
-      console.log('✅ Supabase 上載成功:', publicUrl);
-
-      await request('/resources/upload', {
+    // ✅ Upload 到 baby-resources/resources/
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+    const bucket = 'baby-resources';
+    const subfolder = 'resources';
+    const filePath = `${subfolder}/${fileName}`;
+    
+    const uploadResponse = await fetch(
+      `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/${bucket}/${filePath}`,
+      {
         method: 'POST',
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          file_name: file.name,
-          file_path: publicUrl,
-          file_size: file.size
-        })
-      });
+        headers: {
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU`,
+          'Content-Type': file.type
+        },
+        body: file
+      }
+    );
 
-      alert('✅ 上載成功！');
-      onSuccess();
-
-    } catch (error) {
-      console.error('❌ 上載失敗:', error);
-      alert('上載失敗：' + error.message);
-    } finally {
-      setUploading(false);
+    if (!uploadResponse.ok) {
+      const error = await uploadResponse.text();
+      throw new Error(`Supabase Upload 失敗: ${error}`);
     }
-  };
+
+    const publicUrl = `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/public/${bucket}/${filePath}`;
+
+    console.log('✅ Supabase 上載成功:', publicUrl);
+
+    // ✅ 儲存到資料庫
+    await request('/resources/upload', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        file_name: file.name,
+        file_path: publicUrl,
+        file_size: file.size
+      })
+    });
+
+    alert('✅ 上載成功！');
+    onSuccess();
+
+  } catch (error) {
+    console.error('❌ 上載失敗:', error);
+    alert('上載失敗：' + error.message);
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <div
@@ -641,13 +468,19 @@ function UploadModal({ onClose, onSuccess }) {
           padding: '24px'
         }}
       >
+        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '24px'
         }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#1f2937',
+            margin: 0
+          }}>
             📤 上載資源
           </h2>
           <button
@@ -662,7 +495,9 @@ function UploadModal({ onClose, onSuccess }) {
               opacity: uploading ? 0.5 : 1
             }}
             onMouseOver={(e) => {
-              if (!uploading) e.currentTarget.style.backgroundColor = '#fee2e2';
+              if (!uploading) {
+                e.currentTarget.style.backgroundColor = '#fee2e2';
+              }
             }}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
@@ -670,6 +505,7 @@ function UploadModal({ onClose, onSuccess }) {
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{
@@ -798,7 +634,10 @@ function UploadModal({ onClose, onSuccess }) {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{
+            display: 'flex',
+            gap: '12px'
+          }}>
             <button
               type="button"
               onClick={onClose}
