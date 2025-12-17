@@ -40,7 +40,7 @@ function PostCard({ post, currentUser, onLike, onShowDetail }) {
       backgroundColor: postItColor,
       border: `3px solid ${borderColor}`,
       borderRadius: '4px',
-      padding: '16px',
+      padding: '50px',
       boxShadow: '4px 4px 8px rgba(0, 0, 0, 0.1)',
       transition: 'all 0.2s',
       position: 'relative',
