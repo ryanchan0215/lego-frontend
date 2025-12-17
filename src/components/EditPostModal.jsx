@@ -33,7 +33,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
       return;
     }
 
-    if (!confirm(`確定要儲存修改嗎？\n修改成功後可獲得 +1 Token 獎勵！`)) {
+    if (!confirm('確定要儲存修改嗎？')) {
       return;
     }
 
@@ -50,7 +50,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
         body: JSON.stringify(updateData)
       });
 
-      alert(`✅ 修改成功！\n你獲得 +1 Token 獎勵\n目前 Token 數量：${result.remaining_tokens}`);
+      alert('✅ 修改成功！');
       onSuccess();
     } catch (error) {
       console.error('❌ 編輯失敗:', error);
@@ -125,31 +125,11 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* ✅ 獎勵提示（改成綠色） */}
-        <div 
-          className="edit-modal-info"
-          style={{
-            padding: '16px 20px',
-            backgroundColor: '#d1fae5',
-            border: '1px solid #10b981',
-            margin: '20px',
-            borderRadius: '8px',
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center'
-          }}
-        >
-          <span style={{ fontSize: '24px' }}>🎁</span>
-          <div style={{ fontSize: '13px', color: '#065f46', fontWeight: '500' }}>
-            <strong>✨ 提示：</strong>修改價錢成功後可獲得 <strong style={{ color: '#059669' }}>+1 Token 獎勵</strong>！
-          </div>
-        </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit} style={{
           flex: 1,
           overflow: 'auto',
-          padding: '0 20px 20px 20px'
+          padding: '20px'
         }}>
           <div style={{ display: 'grid', gap: '12px' }}>
             {items.map((item) => {
@@ -290,7 +270,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
               }}
             >
               <Save size={18} />
-              {hasChanges() ? '儲存修改（獎勵 +1 Token）' : '沒有修改'}
+              {hasChanges() ? '儲存修改' : '沒有修改'}
             </button>
           </div>
         </form>
