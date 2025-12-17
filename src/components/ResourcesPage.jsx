@@ -63,7 +63,7 @@ function ResourcesPage({ currentUser }) {
 
   // ✅ 下載 + 記錄統計
   const handleDownload = async (resource) => {
-    // ✅ 檢查登入狀態
+    // ✅ 檢查登入
     if (!currentUser) {
       alert('⚠️ 請先登入才能下載資源！');
       return;
@@ -108,11 +108,7 @@ function ResourcesPage({ currentUser }) {
   };
 
   return (
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '20px'
-    }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       {/* Header */}
       <div style={{
         marginBottom: '30px',
@@ -131,11 +127,7 @@ function ResourcesPage({ currentUser }) {
           }}>
             📚 BB 資源中心
           </h1>
-          <p style={{
-            fontSize: '14px',
-            color: '#6b7280',
-            margin: 0
-          }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
             免費下載育兒資源、字帖、健康指南等
             {!currentUser && (
               <span style={{ color: '#ef4444', fontWeight: '600' }}>
@@ -181,12 +173,7 @@ function ResourcesPage({ currentUser }) {
           <Search
             size={20}
             color="#9ca3af"
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)'
-            }}
+            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
           />
           <input
             type="text"
@@ -269,18 +256,16 @@ function ResourcesPage({ currentUser }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div
-                  style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    backgroundColor: category.color,
-                    color: 'white',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    marginBottom: '12px'
-                  }}
-                >
+                <div style={{
+                  display: 'inline-block',
+                  padding: '4px 12px',
+                  backgroundColor: category.color,
+                  color: 'white',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  marginBottom: '12px'
+                }}>
                   {category.label}
                 </div>
 
@@ -320,21 +305,13 @@ function ResourcesPage({ currentUser }) {
                   {resource.file_size && (
                     <span>• {(resource.file_size / 1024).toFixed(1)} KB</span>
                   )}
-                  {/* ✅ 顯示下載次數 */}
-                  <span style={{ 
-                    color: '#3b82f6',
-                    fontWeight: '600'
-                  }}>
+                  <span style={{ color: '#3b82f6', fontWeight: '600' }}>
                     • {resource.download_count || 0} 次下載
                   </span>
                 </div>
 
                 {/* ✅ 預覽 + 下載按鈕 */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '8px'
-                }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
                     onClick={() => handlePreview(resource)}
                     style={{
@@ -486,12 +463,7 @@ function PreviewModal({ resource, onClose, onDownload, currentUser }) {
             }}>
               {category.label}
             </div>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: '#1f2937',
-              margin: 0
-            }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
               {resource.title}
             </h3>
           </div>
@@ -549,11 +521,7 @@ function PreviewModal({ resource, onClose, onDownload, currentUser }) {
         <div style={{ flex: 1, position: 'relative' }}>
           <iframe
             src={`${resource.file_path}#toolbar=0&navpanes=0`}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none'
-            }}
+            style={{ width: '100%', height: '100%', border: 'none' }}
             title={resource.title}
           />
         </div>
@@ -679,12 +647,7 @@ function UploadModal({ onClose, onSuccess }) {
           alignItems: 'center',
           marginBottom: '24px'
         }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#1f2937',
-            margin: 0
-          }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
             📤 上載資源
           </h2>
           <button
@@ -699,9 +662,7 @@ function UploadModal({ onClose, onSuccess }) {
               opacity: uploading ? 0.5 : 1
             }}
             onMouseOver={(e) => {
-              if (!uploading) {
-                e.currentTarget.style.backgroundColor = '#fee2e2';
-              }
+              if (!uploading) e.currentTarget.style.backgroundColor = '#fee2e2';
             }}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
@@ -837,10 +798,7 @@ function UploadModal({ onClose, onSuccess }) {
             )}
           </div>
 
-          <div style={{
-            display: 'flex',
-            gap: '12px'
-          }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
             <button
               type="button"
               onClick={onClose}
