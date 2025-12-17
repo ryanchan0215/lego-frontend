@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Upload, Download, FileText, Search, Filter, X, AlertCircle } from 'lucide-react';
+import { Upload, Download, FileText, Search, X } from 'lucide-react';
 import { request } from '../api';
+import { supabase } from '../supabaseClient';  // ✅ 加呢行
 
 const CATEGORIES = [
   { value: 'writing', label: '✏️ 字帖', color: '#3b82f6' },
@@ -58,21 +59,14 @@ function ResourcesPage({ currentUser }) {
 
   const handleDownload = async (resource) => {
     try {
-      const response = await fetch(`http://localhost:8000${resource.file_path}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = resource.file_name;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // ✅ 直接用 Supabase 公開 URL 下載
+      const link = document.createElement('a');
+      link.href = resource.file_path;
+      link.download = resource.file_name;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('下載失敗:', error);
       alert('下載失敗');
@@ -148,7 +142,6 @@ function ResourcesPage({ currentUser }) {
         gridTemplateColumns: '1fr auto',
         gap: '12px'
       }}>
-        {/* Search */}
         <div style={{ position: 'relative' }}>
           <Search
             size={20}
@@ -176,7 +169,6 @@ function ResourcesPage({ currentUser }) {
           />
         </div>
 
-        {/* Category Filter */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -243,7 +235,6 @@ function ResourcesPage({ currentUser }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {/* Category Badge */}
                 <div
                   style={{
                     display: 'inline-block',
@@ -259,7 +250,6 @@ function ResourcesPage({ currentUser }) {
                   {category.label}
                 </div>
 
-                {/* Title */}
                 <h3 style={{
                   fontSize: '16px',
                   fontWeight: '700',
@@ -269,7 +259,6 @@ function ResourcesPage({ currentUser }) {
                   {resource.title}
                 </h3>
 
-                {/* Description */}
                 {resource.description && (
                   <p style={{
                     fontSize: '13px',
@@ -281,7 +270,6 @@ function ResourcesPage({ currentUser }) {
                   </p>
                 )}
 
-                {/* File Info */}
                 <div style={{
                   fontSize: '12px',
                   color: '#9ca3af',
@@ -297,7 +285,6 @@ function ResourcesPage({ currentUser }) {
                   )}
                 </div>
 
-                {/* Download Button */}
                 <button
                   onClick={() => handleDownload(resource)}
                   style={{
@@ -339,7 +326,9 @@ function ResourcesPage({ currentUser }) {
   );
 }
 
-// Upload Modal Component
+// ========================================
+// 📤 Upload Modal（✅ Frontend 直接 Upload）
+// ========================================
 function UploadModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -362,25 +351,60 @@ function UploadModal({ onClose, onSuccess }) {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      alert('檔案不能超過 10MB！');
+      return;
+    }
+
     setUploading(true);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('file', file);
+      console.log('📤 開始上載 PDF 到 Supabase...');
 
+      // ✅ 1. Upload 去 Supabase Storage
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+      const filePath = `resources/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('resources')  // ✅ 你嘅 bucket 名稱
+        .upload(filePath, file, {
+          contentType: 'application/pdf',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error(`Supabase 上載失敗: ${uploadError.message}`);
+      }
+
+      console.log('✅ Supabase 上載成功:', uploadData);
+
+      // ✅ 2. 取得公開 URL
+      const { data: publicUrlData } = supabase.storage
+        .from('resources')
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData.publicUrl;
+
+      console.log('🔗 公開 URL:', publicUrl);
+
+      // ✅ 3. 發送去 Backend 儲存到資料庫（只傳 URL + metadata）
       await request('/resources/upload', {
         method: 'POST',
-        body: formDataToSend,
-        headers: {} // Let browser set Content-Type
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          file_name: file.name,
+          file_path: publicUrl,
+          file_size: file.size
+        })
       });
 
       alert('✅ 上載成功！');
       onSuccess();
+
     } catch (error) {
-      console.error('上載失敗:', error);
+      console.error('❌ 上載失敗:', error);
       alert('上載失敗：' + error.message);
     } finally {
       setUploading(false);
@@ -570,6 +594,7 @@ function UploadModal({ onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
+              disabled={uploading}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -579,7 +604,8 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.6 : 1
               }}
             >
               取消
@@ -596,9 +622,14 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: '600',
-                cursor: uploading ? 'not-allowed' : 'pointer'
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
               }}
             >
+              <Upload size={16} />
               {uploading ? '上載中...' : '上載'}
             </button>
           </div>
