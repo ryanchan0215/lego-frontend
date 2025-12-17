@@ -49,19 +49,21 @@ function BulkSalePromo({ onRegisterClick }) {
         </div>
       </div>
 
-      {/* 📱 手機版：彈出訊息（可選） */}
+        {/* 📱 手機版：彈出訊息（可選） */}
       <style jsx>{`
         .bulk-promo-desktop {
           position: sticky;
           top: 100px;
           width: 180px;
           margin-right: 20px;
+          margin-left: -40px; /* ✅ 加這行：向左移動 40px（可調整） */
           background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
           border-radius: 16px;
           padding: 24px 16px;
           box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
           color: white;
           text-align: center;
+          z-index: 100; /* ✅ 加這行：確保在 PostCard 上方 */
         }
 
         .bulk-promo-badge {
