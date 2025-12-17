@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
-import EarnTokenModal from './EarnTokenModal';
+
 import ContactSupportModal from './ContactSupportModal';
 
 function Header({ 
@@ -19,7 +19,7 @@ function Header({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showMyPosts, setShowMyPosts] = useState(false);
-  const [showEarnToken, setShowEarnToken] = useState(false);
+
   const [showContactSupport, setShowContactSupport] = useState(false);
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
@@ -68,16 +68,7 @@ function Header({
     };
   }, [showUserMenu]);
 
-  const handleTokenEarned = async () => {
-    try {
-      const freshUser = await authAPI.getCurrentUser();
-      if (onUserUpdate) {
-        onUserUpdate(freshUser);
-      }
-    } catch (error) {
-      console.error('更新用戶資料失敗:', error);
-    }
-  };
+
 
   return (
     <>
@@ -121,35 +112,6 @@ function Header({
                   聯絡客服
                 </button>
 
-                <button
-                  onClick={() => setShowEarnToken(true)}
-                  style={{
-                    padding: '10px 16px',
-                    backgroundColor: '#fbbf24',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 2px 4px rgba(251, 191, 36, 0.3)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f59e0b';
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fbbf24';
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  <Gift size={18} />
-                  賺 Token
-                </button>
 
                 <div style={{ position: 'relative' }} ref={menuRef}>
                   <button
@@ -507,13 +469,7 @@ function Header({
         />
       )}
 
-      {showEarnToken && (
-        <EarnTokenModal
-          currentUser={currentUser}
-          onClose={() => setShowEarnToken(false)}
-          onSuccess={handleTokenEarned}
-        />
-      )}
+  
 
       {showContactSupport && (
         <ContactSupportModal

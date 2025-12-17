@@ -111,7 +111,7 @@ function App() {
       const result = await authAPI.login({ username, password });
       setCurrentUser(result.user);
       setShowLogin(false);
-      alert(`歡迎返嚟，${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+      alert(`歡迎返嚟，${result.user.username}！`);
       
       try {
         await loadPosts();
@@ -129,7 +129,7 @@ function App() {
       const result = await authAPI.register(userData);
       setCurrentUser(result.user);
       setShowRegister(false);
-      alert(`註冊成功！歡迎 ${result.user.username}！你有 ${result.user.tokens} 次發佈機會`);
+      alert(`註冊成功！歡迎 ${result.user.username}！`);
       
       try {
         await loadPosts();

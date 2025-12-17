@@ -294,7 +294,7 @@ function EditPostModal({ post, currentUser, onClose, onSuccess }) {
               }}
             >
               <Save size={18} />
-              {hasChanges() ? '儲存修改（需要 1 Token）' : '沒有修改'}
+              {hasChanges() ? '儲存修改' : '沒有修改'}
             </button>
           </div>
         </form>
