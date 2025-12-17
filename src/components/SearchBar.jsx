@@ -68,7 +68,7 @@ function SearchBar({
         </div>
       </div>
 
-      {/* ✅ 一行過篩選器 */}
+      {/* ✅ 一行過篩選器（收窄版） */}
       <div className="searchbar-filters-wrapper">
         <div className="searchbar-filters-content">
           <div style={{
@@ -76,8 +76,12 @@ function SearchBar({
             gap: '12px',
             alignItems: 'center'
           }}>
-            {/* ✅ 搜尋框（flex-grow 自動撐滿） */}
-            <div style={{ position: 'relative', flex: 1 }}>
+            {/* ✅ 搜尋框（固定 400px，手機版 100%） */}
+            <div style={{ 
+              position: 'relative', 
+              width: '400px',
+              maxWidth: '100%'
+            }}>
               <Search 
                 size={18} 
                 style={{
@@ -106,7 +110,7 @@ function SearchBar({
               />
             </div>
 
-            {/* ✅ 種類篩選（固定寬度 200px） */}
+            {/* ✅ 種類篩選（固定 200px） */}
             <select
               value={filters.category || ''}
               onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
@@ -175,6 +179,7 @@ function SearchBar({
             flex-direction: column !important;
           }
 
+          .searchbar-filters-content > div > div,
           .searchbar-filters-content select {
             width: 100% !important;
           }
