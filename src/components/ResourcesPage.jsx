@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Upload, Download, FileText, Search, X } from 'lucide-react';
 import { request } from '../api';
-import { supabase } from '../supabaseClient';  // ✅ 加呢行
 
 const CATEGORIES = [
   { value: 'writing', label: '✏️ 字帖', color: '#3b82f6' },
@@ -11,6 +10,37 @@ const CATEGORIES = [
   { value: 'education', label: '📚 教育資源', color: '#8b5cf6' },
   { value: 'safety', label: '🛡️ 安全須知', color: '#ec4899' }
 ];
+
+// ✅ Supabase 設定（Hard-coded，同 imageCompression.js 一樣）
+const SUPABASE_URL = 'https://fifgdbgibdclpztlcxog.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU';
+
+/**
+ * ✅ Upload PDF 到 Supabase（跟 imageCompression.js 一樣）
+ */
+async function uploadPdfToSupabase(file) {
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+  const folder = 'resources';
+  
+  const response = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': file.type
+      },
+      body: file
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Upload 失敗: ${error}`);
+  }
+  
+  return `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
+}
 
 function ResourcesPage({ currentUser }) {
   const [resources, setResources] = useState([]);
@@ -59,7 +89,6 @@ function ResourcesPage({ currentUser }) {
 
   const handleDownload = async (resource) => {
     try {
-      // ✅ 直接用 Supabase 公開 URL 下載
       const link = document.createElement('a');
       link.href = resource.file_path;
       link.download = resource.file_name;
@@ -327,7 +356,7 @@ function ResourcesPage({ currentUser }) {
 }
 
 // ========================================
-// 📤 Upload Modal（✅ Frontend 直接 Upload）
+// 📤 Upload Modal（✅ 用 fetch，唔用 supabase client）
 // ========================================
 function UploadModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -361,33 +390,32 @@ function UploadModal({ onClose, onSuccess }) {
     try {
       console.log('📤 開始上載 PDF 到 Supabase...');
 
-      // ✅ 1. Upload 去 Supabase Storage
+      // ✅ 1. Upload 去 Supabase（用 fetch，同 imageCompression.js 一樣）
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-      const filePath = `resources/${fileName}`;
+      const folder = 'resources';
+      
+      const uploadResponse = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': file.type
+          },
+          body: file
+        }
+      );
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('resources')  // ✅ 你嘅 bucket 名稱
-        .upload(filePath, file, {
-          contentType: 'application/pdf',
-          upsert: false
-        });
-
-      if (uploadError) {
-        throw new Error(`Supabase 上載失敗: ${uploadError.message}`);
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.text();
+        throw new Error(`Supabase Upload 失敗: ${error}`);
       }
 
-      console.log('✅ Supabase 上載成功:', uploadData);
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
 
-      // ✅ 2. 取得公開 URL
-      const { data: publicUrlData } = supabase.storage
-        .from('resources')
-        .getPublicUrl(filePath);
+      console.log('✅ Supabase 上載成功:', publicUrl);
 
-      const publicUrl = publicUrlData.publicUrl;
-
-      console.log('🔗 公開 URL:', publicUrl);
-
-      // ✅ 3. 發送去 Backend 儲存到資料庫（只傳 URL + metadata）
+      // ✅ 2. 發送去 Backend 儲存到資料庫
       await request('/resources/upload', {
         method: 'POST',
         body: JSON.stringify({
@@ -455,13 +483,21 @@ function UploadModal({ onClose, onSuccess }) {
           </h2>
           <button
             onClick={onClose}
+            disabled={uploading}
             style={{
               background: 'none',
               border: 'none',
-              cursor: 'pointer',
+              cursor: uploading ? 'not-allowed' : 'pointer',
               padding: '8px',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              opacity: uploading ? 0.5 : 1
             }}
+            onMouseOver={(e) => {
+              if (!uploading) {
+                e.currentTarget.style.backgroundColor = '#fee2e2';
+              }
+            }}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <X size={24} color="#dc2626" />
           </button>
@@ -484,13 +520,15 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             />
           </div>
@@ -509,6 +547,7 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -516,7 +555,8 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 boxSizing: 'border-box',
-                resize: 'vertical'
+                resize: 'vertical',
+                opacity: uploading ? 0.6 : 1
               }}
             />
           </div>
@@ -535,13 +575,15 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             >
               {CATEGORIES.map(cat => (
@@ -560,29 +602,32 @@ function UploadModal({ onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              PDF 檔案 *
+              PDF 檔案 * （最大 10MB）
             </label>
             <input
               type="file"
               accept=".pdf"
               onChange={(e) => setFile(e.target.files[0])}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             />
             {file && (
               <div style={{
                 marginTop: '8px',
                 fontSize: '12px',
-                color: '#6b7280'
+                color: file.size > 10 * 1024 * 1024 ? '#ef4444' : '#6b7280'
               }}>
                 已選擇: {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                {file.size > 10 * 1024 * 1024 && ' ⚠️ 超過 10MB！'}
               </div>
             )}
           </div>
