@@ -79,8 +79,9 @@ function SearchBar({
             {/* ✅ 搜尋框（固定 400px，手機版 100%） */}
             <div style={{ 
               position: 'relative', 
+              flex:1,
               width: '400px',
-              maxWidth: '100%'
+              maxWidth: '0%'
             }}>
               <Search 
                 size={18} 
