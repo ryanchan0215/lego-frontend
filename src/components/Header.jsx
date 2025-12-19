@@ -5,6 +5,7 @@ import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
 import ContactSupportModal from './ContactSupportModal';
+import { useNavigate } from 'react-router-dom';  // ✅ 新增
 
 function Header({ 
   currentUser, 
@@ -24,6 +25,7 @@ function Header({
   const [showContactSupport, setShowContactSupport] = useState(false);
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
+    const navigate = useNavigate();  // ✅ 新增
 
   useEffect(() => {
     if (currentUser) {
@@ -458,8 +460,8 @@ function Header({
                   登入
                 </button>
 
-                <button
-                  onClick={onRegisterClick}
+<button
+                  onClick={() => navigate('/register')}  // ✅ 改呢行
                   style={{
                     padding: '10px 20px',
                     backgroundColor: 'white',

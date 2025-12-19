@@ -39,6 +39,14 @@ function App() {
     initializeApp();
   }, []);
 
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setShowRegister(true);
+    } else {
+      setShowRegister(false);
+    }
+  }, [location.pathname]);
+
   const initializeApp = async () => {
     try {
       if (tokenManager.isAuthenticated()) {
@@ -129,11 +137,12 @@ function App() {
     }
   };
 
-  const handleRegister = async (userData) => {
+ const handleRegister = async (userData) => {
     try {
       const result = await authAPI.register(userData);
       setCurrentUser(result.user);
       setShowRegister(false);
+      navigate('/');  // ✅ 新增：註冊成功返回主頁
       alert(`註冊成功！歡迎 ${result.user.username}！`);
       
       try {
@@ -354,17 +363,20 @@ function App() {
         />
       )}
 
-      {showRegister && (
+    {showRegister && (
         <RegisterModal
-          onClose={() => setShowRegister(false)}
+          onClose={() => {
+            setShowRegister(false);
+            navigate('/');  // ✅ 新增：關閉時返回主頁
+          }}
           onRegister={handleRegister}
           onSwitchToLogin={() => {
             setShowRegister(false);
             setShowLogin(true);
+            navigate('/');  // ✅ 新增
           }}
         />
       )}
-
       {showMessageCenter && (
         <MessageCenter
           currentUser={currentUser}
