@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';  // ✅ 新增
 import './App.css';
 import Header from './components/Header';
 import SearchBar from './components/SearchBar';
@@ -14,6 +15,9 @@ import PromotionBanner from './components/PromotionBanner';
 import BulkSalePromo from './components/BulkSalePromo';
 
 function App() {
+  const navigate = useNavigate();  // ✅ 新增
+  const location = useLocation();  // ✅ 新增
+
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,7 +33,7 @@ function App() {
   const [selectedPostDetail, setSelectedPostDetail] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   
-  const [currentPage, setCurrentPage] = useState('home');
+  // ❌ 刪除 currentPage state（唔再需要）
 
   useEffect(() => {
     initializeApp();
@@ -244,6 +248,53 @@ function App() {
     );
   }
 
+  // ✅ 主頁 Component
+  const HomePage = () => (
+    <main className="main-container">
+      <SearchBar 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        searchTerm={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onFilterChange={setFilters}
+      />
+
+      <div className="content-grid">
+        <div className="side-ad">
+          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+        </div>
+
+        <div className="posts-grid">
+          {filteredPosts.length === 0 ? (
+            <div 
+              className="text-center py-12 bg-white rounded-lg shadow" 
+              style={{ gridColumn: '1 / -1' }}
+            >
+              <p className="text-gray-500 text-lg">
+                {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
+              </p>
+            </div>
+          ) : (
+            filteredPosts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUser={currentUser}
+                onLike={handleLike}
+                onShowDetail={handleShowDetail}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="side-ad">
+          <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+        </div>
+      </div>
+    </main>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -263,62 +314,21 @@ function App() {
         }}
         onMessageCenterClick={handleMessageCenterClick}
         onUserUpdate={handleUserUpdate}
-        onResourcesClick={() => setCurrentPage('resources')}
-        onHomeClick={() => setCurrentPage('home')}
       />
 
-      {/* ✅ 根據 currentPage 顯示不同內容 */}
-      {currentPage === 'home' ? (
-        <main className="main-container">
-          <SearchBar 
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            searchTerm={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={filters}
-            onFilterChange={setFilters}
-          />
-
-          <div className="content-grid">
-            <div className="side-ad">
-              <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
-            </div>
-
-            <div className="posts-grid">
-              {filteredPosts.length === 0 ? (
-                <div 
-                  className="text-center py-12 bg-white rounded-lg shadow" 
-                  style={{ gridColumn: '1 / -1' }}
-                >
-                  <p className="text-gray-500 text-lg">
-                    {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
-                  </p>
-                </div>
-              ) : (
-                filteredPosts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    currentUser={currentUser}
-                    onLike={handleLike}
-                    onShowDetail={handleShowDetail}
-                  />
-                ))
-              )}
-            </div>
-
-            <div className="side-ad">
-              <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
-            </div>
-          </div>
-        </main>
-      ) : (
-        // ✅ 顯示 BB 資源頁面（傳遞 onLoginRequired）
-        <ResourcesPage 
-          currentUser={currentUser}
-          onLoginRequired={handleLoginRequired}
+      {/* ✅ 改用 React Router */}
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route 
+          path="/resources" 
+          element={
+            <ResourcesPage 
+              currentUser={currentUser}
+              onLoginRequired={handleLoginRequired}
+            />
+          } 
         />
-      )}
+      </Routes>
 
       <div className="bottom-ad">
         🖼️ 底部廣告位（待申請）

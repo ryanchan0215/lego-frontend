@@ -1,5 +1,6 @@
 import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift, HelpCircle, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';  // ✅ 新增
 import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
@@ -12,9 +13,9 @@ function Header({
   onLogout, 
   onCreatePostClick,
   onMessageCenterClick,
-  onUserUpdate,
-  onResourcesClick,  // ✅ 新增
-  onHomeClick        // ✅ 新增
+  onUserUpdate
+  // ❌ 刪除 onResourcesClick
+  // ❌ 刪除 onHomeClick
 }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -72,19 +73,22 @@ function Header({
     <>
       <header className="header-container">
         <div className="header-content">
-          {/* ✅ Logo 可點擊返回主頁 */}
-          <div 
+          {/* ✅ Logo 改用 Link */}
+          <Link 
+            to="/"
             className="header-logo" 
-            onClick={onHomeClick}
-            style={{ cursor: 'pointer' }}
+            style={{ 
+              cursor: 'pointer',
+              textDecoration: 'none'  // ✅ 移除底線
+            }}
           >
-            <h1>👶 嬰幼兒產品交易平台</h1>
-          </div>
+            <h1>👶 嬰幼兒產品交易平台 & 育兒素材分享</h1>
+          </Link>
 
           <div className="header-buttons">
-            {/* ✅ BB 資源按鈕（登入/未登入都顯示） */}
-            <button
-              onClick={onResourcesClick}
+            {/* ✅ BB 資源改用 Link */}
+            <Link
+              to="/resources"
               style={{
                 padding: '10px 18px',
                 backgroundColor: '#8b5cf6',
@@ -97,14 +101,15 @@ function Header({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                textDecoration: 'none'  // ✅ 移除底線
               }}
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#8b5cf6'}
             >
               <BookOpen size={18} />
-              BB 資源
-            </button>
+              育兒素材分享
+            </Link>
 
             {currentUser ? (
               <>
