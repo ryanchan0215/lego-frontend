@@ -116,7 +116,7 @@ function SearchBar({
               onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
               style={{
                 width: '200px',
-                padding: '10px 12px',
+                padding: '60px 12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
