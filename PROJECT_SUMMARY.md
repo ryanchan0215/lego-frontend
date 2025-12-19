@@ -61,6 +61,7 @@
 ├── sql.sql
 ├── supabase_ready.sql
 ├── tailwind.config.js
+├── vercel.json
 └── vite.config.js
 ```
 
@@ -128,23 +129,23 @@ export default defineConfig([
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- ✅ 改標題 -->
-    <title>嬰幼兒產品交易/贈送/徵收平台 | 香港二手母嬰用品買賣/交換 | 免費發佈</title>
+    <title>  | 嬰幼兒產品交易平台 & 幼兒學習素材 & 育兒資訊 | 免費發佈</title>
     
     <!-- ✅ 改 meta description -->
-    <meta name="description" content="香港最大嬰幼兒產品交易平台，免費發佈二手母嬰用品、玩具、嬰兒車、奶粉等，安全可靠的買賣交流平台。" />
+    <meta name="description" content="香港嬰幼兒產品交易平台，免費發佈嬰兒學習資源及材料、二手母嬰用品、玩具、嬰兒車等。" />
     
     <!-- ✅ 改 keywords -->
-    <meta name="keywords" content="嬰幼兒產品, 母嬰用品, 二手嬰兒用品, 香港, 買賣, 交易平台, 嬰兒車, 奶粉, 玩具" />
+    <meta name="keywords" content="嬰幼兒產品, 母嬰用品, 二手嬰兒用品, 香港, 買賣, 交易平台, 嬰兒車, 玩具, 學習資料及材料分享" />
     
     <!-- Open Graph (Facebook 分享) -->
-    <meta property="og:title" content="嬰幼兒產品交易平台 | 香港二手母嬰用品買賣" />
-    <meta property="og:description" content="免費發佈及搜尋嬰幼兒產品，安全可靠的交易平台" />
+    <meta property="og:title" content="嬰幼兒產品交易平台 & 幼兒學習素材 & 育兒資訊 | 香港二手母嬰用品買賣" />
+    <meta property="og:description" content="免費發佈及搜尋嬰幼兒產品 & 幼兒學習素材 & 育兒資訊" />
     <meta property="og:type" content="website" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="嬰幼兒產品交易/贈送/徵收平台" />
-    <meta name="twitter:description" content="香港二手母嬰用品買賣平台" />
+    <meta name="twitter:title" content="嬰幼兒產品交易平台 & 幼兒學習素材 & 育兒資訊 | 香港二手母嬰用品買賣" />
+    <meta name="twitter:description" content="嬰幼兒產品交易平台 & 幼兒學習素材 & 育兒資訊" />
   </head>
   <body>
     <div id="root"></div>
@@ -4272,6 +4273,7 @@ export default {
 
 ```jsx
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';  // ✅ 新增
 import './App.css';
 import Header from './components/Header';
 import SearchBar from './components/SearchBar';
@@ -4287,6 +4289,9 @@ import PromotionBanner from './components/PromotionBanner';
 import BulkSalePromo from './components/BulkSalePromo';
 
 function App() {
+  const navigate = useNavigate();  // ✅ 新增
+  const location = useLocation();  // ✅ 新增
+
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
@@ -4302,11 +4307,19 @@ function App() {
   const [selectedPostDetail, setSelectedPostDetail] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   
-  const [currentPage, setCurrentPage] = useState('home');
+  // ❌ 刪除 currentPage state（唔再需要）
 
   useEffect(() => {
     initializeApp();
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setShowRegister(true);
+    } else {
+      setShowRegister(false);
+    }
+  }, [location.pathname]);
 
   const initializeApp = async () => {
     try {
@@ -4398,11 +4411,12 @@ function App() {
     }
   };
 
-  const handleRegister = async (userData) => {
+ const handleRegister = async (userData) => {
     try {
       const result = await authAPI.register(userData);
       setCurrentUser(result.user);
       setShowRegister(false);
+      navigate('/');  // ✅ 新增：註冊成功返回主頁
       alert(`註冊成功！歡迎 ${result.user.username}！`);
       
       try {
@@ -4517,6 +4531,53 @@ function App() {
     );
   }
 
+  // ✅ 主頁 Component
+  const HomePage = () => (
+    <main className="main-container">
+      <SearchBar 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        searchTerm={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onFilterChange={setFilters}
+      />
+
+      <div className="content-grid">
+        <div className="side-ad">
+          <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
+        </div>
+
+        <div className="posts-grid">
+          {filteredPosts.length === 0 ? (
+            <div 
+              className="text-center py-12 bg-white rounded-lg shadow" 
+              style={{ gridColumn: '1 / -1' }}
+            >
+              <p className="text-gray-500 text-lg">
+                {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
+              </p>
+            </div>
+          ) : (
+            filteredPosts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUser={currentUser}
+                onLike={handleLike}
+                onShowDetail={handleShowDetail}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="side-ad">
+          <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
+        </div>
+      </div>
+    </main>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -4536,62 +4597,21 @@ function App() {
         }}
         onMessageCenterClick={handleMessageCenterClick}
         onUserUpdate={handleUserUpdate}
-        onResourcesClick={() => setCurrentPage('resources')}
-        onHomeClick={() => setCurrentPage('home')}
       />
 
-      {/* ✅ 根據 currentPage 顯示不同內容 */}
-      {currentPage === 'home' ? (
-        <main className="main-container">
-          <SearchBar 
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            searchTerm={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={filters}
-            onFilterChange={setFilters}
-          />
-
-          <div className="content-grid">
-            <div className="side-ad">
-              <PromotionBanner onRegisterClick={() => setShowRegister(true)} />
-            </div>
-
-            <div className="posts-grid">
-              {filteredPosts.length === 0 ? (
-                <div 
-                  className="text-center py-12 bg-white rounded-lg shadow" 
-                  style={{ gridColumn: '1 / -1' }}
-                >
-                  <p className="text-gray-500 text-lg">
-                    {searchQuery || filters.itemDescription || filters.category ? '搵唔到相關帖子' : '暫時未有帖子'}
-                  </p>
-                </div>
-              ) : (
-                filteredPosts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    currentUser={currentUser}
-                    onLike={handleLike}
-                    onShowDetail={handleShowDetail}
-                  />
-                ))
-              )}
-            </div>
-
-            <div className="side-ad">
-              <BulkSalePromo onRegisterClick={() => setShowRegister(true)} />
-            </div>
-          </div>
-        </main>
-      ) : (
-        // ✅ 顯示 BB 資源頁面（傳遞 onLoginRequired）
-        <ResourcesPage 
-          currentUser={currentUser}
-          onLoginRequired={handleLoginRequired}
+      {/* ✅ 改用 React Router */}
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route 
+          path="/resources" 
+          element={
+            <ResourcesPage 
+              currentUser={currentUser}
+              onLoginRequired={handleLoginRequired}
+            />
+          } 
         />
-      )}
+      </Routes>
 
       <div className="bottom-ad">
         🖼️ 底部廣告位（待申請）
@@ -4617,17 +4637,20 @@ function App() {
         />
       )}
 
-      {showRegister && (
+    {showRegister && (
         <RegisterModal
-          onClose={() => setShowRegister(false)}
+          onClose={() => {
+            setShowRegister(false);
+            navigate('/');  // ✅ 新增：關閉時返回主頁
+          }}
           onRegister={handleRegister}
           onSwitchToLogin={() => {
             setShowRegister(false);
             setShowLogin(true);
+            navigate('/');  // ✅ 新增
           }}
         />
       )}
-
       {showMessageCenter && (
         <MessageCenter
           currentUser={currentUser}
@@ -7895,10 +7918,12 @@ export default EditPostModal;
 ```jsx
 import { User, Plus, LogOut, LogIn, UserPlus, Mail, ChevronDown, FileText, Settings, Gift, HelpCircle, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';  // ✅ 新增
 import { conversationsAPI, tokensAPI, authAPI } from '../api';
 import AdminPanel from './AdminPanel';
 import MyPostsModal from './MyPostsModal';
 import ContactSupportModal from './ContactSupportModal';
+import { useNavigate } from 'react-router-dom';  // ✅ 新增
 
 function Header({ 
   currentUser, 
@@ -7907,9 +7932,9 @@ function Header({
   onLogout, 
   onCreatePostClick,
   onMessageCenterClick,
-  onUserUpdate,
-  onResourcesClick,  // ✅ 新增
-  onHomeClick        // ✅ 新增
+  onUserUpdate
+  // ❌ 刪除 onResourcesClick
+  // ❌ 刪除 onHomeClick
 }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -7918,6 +7943,7 @@ function Header({
   const [showContactSupport, setShowContactSupport] = useState(false);
   const intervalRef = useRef(null);
   const menuRef = useRef(null);
+    const navigate = useNavigate();  // ✅ 新增
 
   useEffect(() => {
     if (currentUser) {
@@ -7967,19 +7993,22 @@ function Header({
     <>
       <header className="header-container">
         <div className="header-content">
-          {/* ✅ Logo 可點擊返回主頁 */}
-          <div 
+          {/* ✅ Logo 改用 Link */}
+          <Link 
+            to="/"
             className="header-logo" 
-            onClick={onHomeClick}
-            style={{ cursor: 'pointer' }}
+            style={{ 
+              cursor: 'pointer',
+              textDecoration: 'none'  // ✅ 移除底線
+            }}
           >
-            <h1>👶 嬰幼兒產品交易平台</h1>
-          </div>
+            <h1>👶 嬰幼兒產品交易平台 & 育兒素材分享</h1>
+          </Link>
 
           <div className="header-buttons">
-            {/* ✅ BB 資源按鈕（登入/未登入都顯示） */}
-            <button
-              onClick={onResourcesClick}
+            {/* ✅ BB 資源改用 Link */}
+            <Link
+              to="/resources"
               style={{
                 padding: '10px 18px',
                 backgroundColor: '#8b5cf6',
@@ -7992,14 +8021,15 @@ function Header({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                textDecoration: 'none'  // ✅ 移除底線
               }}
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#8b5cf6'}
             >
               <BookOpen size={18} />
-              BB 資源
-            </button>
+              育兒素材分享
+            </Link>
 
             {currentUser ? (
               <>
@@ -8348,8 +8378,8 @@ function Header({
                   登入
                 </button>
 
-                <button
-                  onClick={onRegisterClick}
+<button
+                  onClick={() => navigate('/register')}  // ✅ 改呢行
                   style={{
                     padding: '10px 20px',
                     backgroundColor: 'white',
@@ -12767,109 +12797,120 @@ function SearchBar({
         </div>
       </div>
 
-      {/* ✅ 一行過篩選器（收窄版） */}
-    <div className="searchbar-filters-wrapper">
-  <div className="searchbar-filters-content">
-    <div style={{
-      display: 'flex',
-      gap: '12px',
-      alignItems: 'center'
-    }}>
-      {/* ✅ 搜尋框（自動撐滿，佔大部分空間） */}
-      <div style={{ 
-        position: 'relative', 
-        flex: 1,  // ✅ 改用 flex: 1 自動撐滿
-        minWidth: 0  // ✅ 允許縮小
+      {/* ✅ 一行過篩選器（修正版） */}
+      <div className="searchbar-filters-wrapper" style={{
+        width: '100%',           // ✅ 新增
+        overflow: 'hidden'       // ✅ 新增：防止溢出
       }}>
-        <Search 
-          size={18} 
-          style={{
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#9ca3af'
-          }}
-        />
-        <input
-          type="text"
-          placeholder="搜尋資源..."
-          value={searchTerm}
-          onChange={handleSearch}
-          style={{
-            width: '100%',
-            padding: '10px 10px 10px 40px',
-            border: '2px solid #e5e7eb',
-            borderRadius: '8px',
-            fontSize: '14px',
-            outline: 'none'
-          }}
-          onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-          onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-        />
+        <div className="searchbar-filters-content" style={{
+          maxWidth: '100%'       // ✅ 新增
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center',
+            width: '100%'        // ✅ 新增
+          }}>
+            {/* ✅ 搜尋框 */}
+            <div style={{ 
+              position: 'relative', 
+              flex: 1,
+              minWidth: 0,
+              maxWidth: 'calc(100% - 172px)'  // ✅ 新增（160px select + 12px gap）
+            }}>
+              <Search 
+                size={18} 
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af',
+                  pointerEvents: 'none',  // ✅ 新增：防止阻擋點擊
+                  zIndex: 1               // ✅ 新增
+                }}
+              />
+              <input
+                type="text"
+                placeholder="搜尋資源..."
+                value={searchTerm}
+                onChange={handleSearch}
+                style={{
+                  width: '100%',
+                  padding: '10px 10px 10px 40px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'  // ✅ 新增：關鍵修正
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+              />
+            </div>
+
+            {/* ✅ 種類篩選 */}
+            <select
+              value={filters.category || ''}
+              onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
+              style={{
+                width: '160px',
+                padding: '10px 12px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                outline: 'none',
+                flexShrink: 0,
+                boxSizing: 'border-box'  // ✅ 新增：關鍵修正
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+            >
+              <option value="">📂 全部分類</option>
+              
+              {/* 🚼 大件用品 */}
+              <optgroup label="🚼 大件用品">
+                <option value="嬰兒車">🚼 嬰兒車</option>
+                <option value="嬰兒床">🛏️ 嬰兒床</option>
+                <option value="安全座椅">🚗 安全座椅</option>
+                <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
+              </optgroup>
+
+              {/* 🍼 飲食類 */}
+              <optgroup label="🍼 飲食類">
+                <option value="奶粉">🥛 奶粉</option>
+                <option value="嬰兒食品">🍚 嬰兒食品</option>
+                <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
+                <option value="餵食用具">🍴 餵食用具</option>
+              </optgroup>
+
+              {/* 🧸 玩具 & 學習 */}
+              <optgroup label="🧸 玩具 & 學習">
+                <option value="玩具">🧸 玩具</option>
+                <option value="圖書">📚 圖書</option>
+              </optgroup>
+
+              {/* 👕 衣物類 */}
+              <optgroup label="👕 衣物類">
+                <option value="衣服">👕 衣服</option>
+                <option value="鞋襪">👟 鞋襪</option>
+              </optgroup>
+
+              {/* 🧷 清潔護理 */}
+              <optgroup label="🧷 清潔護理">
+                <option value="尿片">🧷 尿片</option>
+                <option value="清潔用品">🧼 清潔用品</option>
+                <option value="洗護用品">🛁 洗護用品</option>
+              </optgroup>
+
+              {/* 📦 其他 */}
+              <option value="其他">📦 其他</option>
+            </select>
+          </div>
+        </div>
       </div>
-
-      {/* ✅ 種類篩選（縮窄至 160px） */}
-      <select
-        value={filters.category || ''}
-        onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
-        style={{
-          width: '160px',  // ✅ 改為 160px（原本 200px）
-          padding: '10px 12px',
-          border: '2px solid #e5e7eb',
-          borderRadius: '8px',
-          fontSize: '14px',
-          cursor: 'pointer',
-          backgroundColor: 'white',
-          outline: 'none',
-          flexShrink: 0
-        }}
-        onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-        onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-      >
-        <option value="">📂 全部分類</option>  {/* ✅ 改文字 */}
-        
-        {/* 🚼 大件用品 */}
-        <optgroup label="🚼 大件用品">
-          <option value="嬰兒車">🚼 嬰兒車</option>
-          <option value="嬰兒床">🛏️ 嬰兒床</option>
-          <option value="安全座椅">🚗 安全座椅</option>
-          <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
-        </optgroup>
-
-        {/* 🍼 飲食類 */}
-        <optgroup label="🍼 飲食類">
-          <option value="奶粉">🥛 奶粉</option>
-          <option value="嬰兒食品">🍚 嬰兒食品</option>
-          <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
-          <option value="餵食用具">🍴 餵食用具</option>
-        </optgroup>
-
-        {/* 🧸 玩具 & 學習 */}
-        <optgroup label="🧸 玩具 & 學習">
-          <option value="玩具">🧸 玩具</option>
-          <option value="圖書">📚 圖書</option>
-        </optgroup>
-
-        {/* 👕 衣物類 */}
-        <optgroup label="👕 衣物類">
-          <option value="衣服">👕 衣服</option>
-          <option value="鞋襪">👟 鞋襪</option>
-        </optgroup>
-
-        {/* 🧷 清潔護理 */}
-        <optgroup label="🧷 清潔護理">
-          <option value="尿片">🧷 尿片</option>
-          <option value="清潔用品">🧼 清潔用品</option>
-          <option value="洗護用品">🛁 洗護用品</option>
-        </optgroup>
-
-        {/* 📦 其他 */}
-        <option value="其他">📦 其他</option>
-      </select>
-    </div>
-  </div>
-</div>
 
       {/* ✅ 手機版：變返直排 */}
       <style jsx>{`
@@ -12986,15 +13027,17 @@ export const mockPosts = [
 ```jsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'  // ✅ 新增
 import './index.css'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>  {/* ✅ 新增 */}
+      <App />
+    </BrowserRouter>  {/* ✅ 新增 */}
   </StrictMode>,
 )
-
 ```
 
 ### 📄 `src\supabaseClient.js`
@@ -13126,6 +13169,16 @@ export default {
     extend: {},
   },
   plugins: [],
+}
+```
+
+### 📄 `vercel.json`
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
 ```
 

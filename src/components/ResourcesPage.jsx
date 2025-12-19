@@ -131,7 +131,7 @@ function ResourcesPage({ currentUser, onLoginRequired }) {
             color: '#1f2937',
             margin: '0 0 8px 0'
           }}>
-            📚 BB 資源中心
+            📚 育兒素材分享
           </h1>
           <p style={{
             fontSize: '14px',
