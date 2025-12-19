@@ -117,7 +117,7 @@ function SearchBar({
               style={{
                 width: '200px',
                 padding: '10px 12px',
-                paddingLeft: '200px',
+               
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
@@ -172,6 +172,7 @@ function SearchBar({
           </div>
         </div>
       </div>
+
 
       {/* ✅ 手機版：變返直排 */}
       <style jsx>{`
