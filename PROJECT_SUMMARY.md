@@ -49,6 +49,7 @@
 │   └── supabaseClient.js
 ├── .env.production
 ├── .gitignore
+├── PROJECT_SUMMARY.md
 ├── README.md
 ├── clean_sql.py
 ├── eslint.config.js
@@ -4280,11 +4281,10 @@ import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
 import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
-import ResourcesPage from './components/ResourcesPage'; // ✅ 新增
+import ResourcesPage from './components/ResourcesPage';
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
 import PromotionBanner from './components/PromotionBanner';
 import BulkSalePromo from './components/BulkSalePromo';
-
 
 function App() {
   const [posts, setPosts] = useState([]);
@@ -4302,7 +4302,7 @@ function App() {
   const [selectedPostDetail, setSelectedPostDetail] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   
-  const [currentPage, setCurrentPage] = useState('home'); // ✅ 新增：頁面狀態
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     initializeApp();
@@ -4500,6 +4500,12 @@ function App() {
     userManager.setUser(updatedUser);
   };
 
+  // ✅ 新增：處理需要登入的情況
+  const handleLoginRequired = () => {
+    alert('⚠️ 請先登入');
+    setShowLogin(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -4530,8 +4536,8 @@ function App() {
         }}
         onMessageCenterClick={handleMessageCenterClick}
         onUserUpdate={handleUserUpdate}
-        onResourcesClick={() => setCurrentPage('resources')} // ✅ 新增
-        onHomeClick={() => setCurrentPage('home')}           // ✅ 新增
+        onResourcesClick={() => setCurrentPage('resources')}
+        onHomeClick={() => setCurrentPage('home')}
       />
 
       {/* ✅ 根據 currentPage 顯示不同內容 */}
@@ -4580,8 +4586,11 @@ function App() {
           </div>
         </main>
       ) : (
-        // ✅ 顯示 BB 資源頁面
-        <ResourcesPage currentUser={currentUser} />
+        // ✅ 顯示 BB 資源頁面（傳遞 onLoginRequired）
+        <ResourcesPage 
+          currentUser={currentUser}
+          onLoginRequired={handleLoginRequired}
+        />
       )}
 
       <div className="bottom-ad">
@@ -11313,18 +11322,21 @@ function BulkSalePromo({ onRegisterClick }) {
         </div>
       </div>
 
-      {/* 📱 手機版：彈出訊息（可選） */}
+        {/* 📱 手機版：彈出訊息（可選） */}
       <style jsx>{`
         .bulk-promo-desktop {
           position: sticky;
           top: 100px;
           width: 180px;
+          margin-right: 20px;
+          margin-left: -40px; /* ✅ 加這行：向左移動 40px（可調整） */
           background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
           border-radius: 16px;
           padding: 24px 16px;
           box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
           color: white;
           text-align: center;
+          z-index: 100; /* ✅ 加這行：確保在 PostCard 上方 */
         }
 
         .bulk-promo-badge {
@@ -11809,7 +11821,7 @@ export default RegisterModal;
 
 ```jsx
 import { useState, useEffect } from 'react';
-import { Upload, Download, FileText, Search, Filter, X, AlertCircle } from 'lucide-react';
+import { Upload, Download, FileText, Search, X, Eye, Lock } from 'lucide-react';
 import { request } from '../api';
 
 const CATEGORIES = [
@@ -11821,12 +11833,18 @@ const CATEGORIES = [
   { value: 'safety', label: '🛡️ 安全須知', color: '#ec4899' }
 ];
 
-function ResourcesPage({ currentUser }) {
+// ✅ Supabase 設定
+const SUPABASE_URL = 'https://fifgdbgibdclpztlcxog.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU';
+
+function ResourcesPage({ currentUser, onLoginRequired }) {
   const [resources, setResources] = useState([]);
   const [filteredResources, setFilteredResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewResource, setPreviewResource] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11866,23 +11884,43 @@ function ResourcesPage({ currentUser }) {
     setFilteredResources(filtered);
   };
 
+  // ✅ 預覽 PDF（登入才可以）
+  const handlePreview = (resource) => {
+    if (!currentUser) {
+      alert('⚠️ 請先登入才能預覽資源');
+      if (onLoginRequired) onLoginRequired();
+      return;
+    }
+    setPreviewResource(resource);
+    setShowPreviewModal(true);
+  };
+
+  // ✅ 下載 PDF（登入 + 記錄次數）
   const handleDownload = async (resource) => {
+    if (!currentUser) {
+      alert('⚠️ 請先登入才能下載資源');
+      if (onLoginRequired) onLoginRequired();
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:8000${resource.file_path}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      // ✅ 記錄下載次數
+      await request(`/resources/${resource.id}/download`, {
+        method: 'POST'
       });
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = resource.file_name;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // ✅ 下載檔案
+      const link = document.createElement('a');
+      link.href = resource.file_path;
+      link.download = resource.file_name;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // ✅ 重新載入（更新下載次數）
+      loadResources();
+
     } catch (error) {
       console.error('下載失敗:', error);
       alert('下載失敗');
@@ -11922,7 +11960,9 @@ function ResourcesPage({ currentUser }) {
             color: '#6b7280',
             margin: 0
           }}>
-            免費下載育兒資源、字帖、健康指南等
+            {currentUser 
+              ? '免費下載育兒資源、字帖、健康指南等' 
+              : '🔒 請登入後下載資源'}
           </p>
         </div>
 
@@ -11958,7 +11998,6 @@ function ResourcesPage({ currentUser }) {
         gridTemplateColumns: '1fr auto',
         gap: '12px'
       }}>
-        {/* Search */}
         <div style={{ position: 'relative' }}>
           <Search
             size={20}
@@ -11986,7 +12025,6 @@ function ResourcesPage({ currentUser }) {
           />
         </div>
 
-        {/* Category Filter */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -12042,7 +12080,8 @@ function ResourcesPage({ currentUser }) {
                   borderRadius: '12px',
                   padding: '20px',
                   transition: 'all 0.2s',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  position: 'relative'
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.borderColor = category.color;
@@ -12053,7 +12092,20 @@ function ResourcesPage({ currentUser }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {/* Category Badge */}
+                {/* ✅ 未登入時顯示鎖定圖示 */}
+                {!currentUser && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: '#fee2e2',
+                    padding: '6px',
+                    borderRadius: '50%'
+                  }}>
+                    <Lock size={16} color="#dc2626" />
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: 'inline-block',
@@ -12069,7 +12121,6 @@ function ResourcesPage({ currentUser }) {
                   {category.label}
                 </div>
 
-                {/* Title */}
                 <h3 style={{
                   fontSize: '16px',
                   fontWeight: '700',
@@ -12079,7 +12130,6 @@ function ResourcesPage({ currentUser }) {
                   {resource.title}
                 </h3>
 
-                {/* Description */}
                 {resource.description && (
                   <p style={{
                     fontSize: '13px',
@@ -12091,44 +12141,80 @@ function ResourcesPage({ currentUser }) {
                   </p>
                 )}
 
-                {/* File Info */}
                 <div style={{
                   fontSize: '12px',
                   color: '#9ca3af',
                   marginBottom: '16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  flexWrap: 'wrap'
                 }}>
                   <FileText size={14} />
-                  {resource.file_name}
+                  <span>{resource.file_name}</span>
                   {resource.file_size && (
                     <span>• {(resource.file_size / 1024).toFixed(1)} KB</span>
                   )}
+                  {/* ✅ 顯示下載次數 */}
+                  <span>• {resource.download_count || 0} 次下載</span>
                 </div>
 
-                {/* Download Button */}
-                <button
-                  onClick={() => handleDownload(resource)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    backgroundColor: category.color,
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Download size={16} />
-                  下載 PDF
-                </button>
+                {/* ✅ 預覽 + 下載按鈕 */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => handlePreview(resource)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: currentUser ? '#f3f4f6' : '#e5e7eb',
+                      color: currentUser ? '#374151' : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: currentUser ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseOver={(e) => {
+                      if (currentUser) {
+                        e.currentTarget.style.backgroundColor = '#e5e7eb';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (currentUser) {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                      }
+                    }}
+                  >
+                    <Eye size={16} />
+                    預覽
+                  </button>
+
+                  <button
+                    onClick={() => handleDownload(resource)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: currentUser ? category.color : '#e5e7eb',
+                      color: currentUser ? 'white' : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: currentUser ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Download size={16} />
+                    下載
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -12145,11 +12231,142 @@ function ResourcesPage({ currentUser }) {
           }}
         />
       )}
+
+      {/* ✅ Preview Modal */}
+      {showPreviewModal && previewResource && (
+        <PreviewModal
+          resource={previewResource}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewResource(null);
+          }}
+          onDownload={() => handleDownload(previewResource)}
+        />
+      )}
     </div>
   );
 }
 
-// Upload Modal Component
+// ========================================
+// 👁️ Preview Modal
+// ========================================
+function PreviewModal({ resource, onClose, onDownload }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px'
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          width: '100%',
+          maxWidth: '900px',
+          height: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 20px',
+          borderBottom: '2px solid #e5e7eb'
+        }}>
+          <div>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: '700',
+              color: '#1f2937',
+              margin: '0 0 4px 0'
+            }}>
+              {resource.title}
+            </h3>
+            <p style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              margin: 0
+            }}>
+              {resource.file_name}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={onDownload}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+            >
+              <Download size={16} />
+              下載
+            </button>
+
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '8px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <X size={24} color="#dc2626" />
+            </button>
+          </div>
+        </div>
+
+        {/* PDF Viewer */}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <iframe
+            src={`${resource.file_path}#toolbar=0`}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none'
+            }}
+            title={resource.title}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================================
+// 📤 Upload Modal
+// ========================================
 function UploadModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -12172,25 +12389,59 @@ function UploadModal({ onClose, onSuccess }) {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      alert('檔案不能超過 10MB！');
+      return;
+    }
+
     setUploading(true);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('file', file);
+      console.log('📤 開始上載 PDF 到 Supabase...');
+
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+      const bucket = 'baby-resources';
+      const subfolder = 'resources';
+      const filePath = `${subfolder}/${fileName}`;
+      
+      const uploadResponse = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': file.type
+          },
+          body: file
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.text();
+        throw new Error(`Supabase Upload 失敗: ${error}`);
+      }
+
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+
+      console.log('✅ Supabase 上載成功:', publicUrl);
 
       await request('/resources/upload', {
         method: 'POST',
-        body: formDataToSend,
-        headers: {} // Let browser set Content-Type
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          file_name: file.name,
+          file_path: publicUrl,
+          file_size: file.size
+        })
       });
 
       alert('✅ 上載成功！');
       onSuccess();
+
     } catch (error) {
-      console.error('上載失敗:', error);
+      console.error('❌ 上載失敗:', error);
       alert('上載失敗：' + error.message);
     } finally {
       setUploading(false);
@@ -12224,7 +12475,6 @@ function UploadModal({ onClose, onSuccess }) {
           padding: '24px'
         }}
       >
-        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -12241,19 +12491,26 @@ function UploadModal({ onClose, onSuccess }) {
           </h2>
           <button
             onClick={onClose}
+            disabled={uploading}
             style={{
               background: 'none',
               border: 'none',
-              cursor: 'pointer',
+              cursor: uploading ? 'not-allowed' : 'pointer',
               padding: '8px',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              opacity: uploading ? 0.5 : 1
             }}
+            onMouseOver={(e) => {
+              if (!uploading) {
+                e.currentTarget.style.backgroundColor = '#fee2e2';
+              }
+            }}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <X size={24} color="#dc2626" />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{
@@ -12270,13 +12527,15 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             />
           </div>
@@ -12295,6 +12554,7 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -12302,7 +12562,8 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 boxSizing: 'border-box',
-                resize: 'vertical'
+                resize: 'vertical',
+                opacity: uploading ? 0.6 : 1
               }}
             />
           </div>
@@ -12321,13 +12582,15 @@ function UploadModal({ onClose, onSuccess }) {
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             >
               {CATEGORIES.map(cat => (
@@ -12346,29 +12609,32 @@ function UploadModal({ onClose, onSuccess }) {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              PDF 檔案 *
+              PDF 檔案 * （最大 10MB）
             </label>
             <input
               type="file"
               accept=".pdf"
               onChange={(e) => setFile(e.target.files[0])}
               required
+              disabled={uploading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '2px solid #e5e7eb',
                 borderRadius: '8px',
                 fontSize: '14px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                opacity: uploading ? 0.6 : 1
               }}
             />
             {file && (
               <div style={{
                 marginTop: '8px',
                 fontSize: '12px',
-                color: '#6b7280'
+                color: file.size > 10 * 1024 * 1024 ? '#ef4444' : '#6b7280'
               }}>
                 已選擇: {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                {file.size > 10 * 1024 * 1024 && ' ⚠️ 超過 10MB！'}
               </div>
             )}
           </div>
@@ -12380,6 +12646,7 @@ function UploadModal({ onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
+              disabled={uploading}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -12389,7 +12656,8 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.6 : 1
               }}
             >
               取消
@@ -12406,9 +12674,14 @@ function UploadModal({ onClose, onSuccess }) {
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: '600',
-                cursor: uploading ? 'not-allowed' : 'pointer'
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
               }}
             >
+              <Upload size={16} />
               {uploading ? '上載中...' : '上載'}
             </button>
           </div>
@@ -12495,108 +12768,108 @@ function SearchBar({
       </div>
 
       {/* ✅ 一行過篩選器（收窄版） */}
-      <div className="searchbar-filters-wrapper">
-        <div className="searchbar-filters-content">
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center'
-          }}>
-            {/* ✅ 搜尋框（固定 400px，手機版 100%） */}
-            <div style={{ 
-              position: 'relative', 
-              width: '400px',
-              maxWidth: '100%'
-            }}>
-              <Search 
-                size={18} 
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }}
-              />
-              <input
-                type="text"
-                placeholder="🔍 搜尋產品資料、種類、品牌..."
-                value={searchTerm}
-                onChange={handleSearch}
-                style={{
-                  width: '100%',
-                  padding: '10px 10px 10px 40px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  outline: 'none'
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-              />
-            </div>
-
-            {/* ✅ 種類篩選（固定 200px） */}
-            <select
-              value={filters.category || ''}
-              onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
-              style={{
-                width: '200px',
-                padding: '10px 12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                backgroundColor: 'white',
-                outline: 'none',
-                flexShrink: 0
-              }}
-              onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-              onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-            >
-              <option value="">📂 所有種類</option>
-              
-              {/* 🚼 大件用品 */}
-              <optgroup label="🚼 大件用品">
-                <option value="嬰兒車">🚼 嬰兒車</option>
-                <option value="嬰兒床">🛏️ 嬰兒床</option>
-                <option value="安全座椅">🚗 安全座椅</option>
-                <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
-              </optgroup>
-
-              {/* 🍼 飲食類 */}
-              <optgroup label="🍼 飲食類">
-                <option value="奶粉">🥛 奶粉</option>
-                <option value="嬰兒食品">🍚 嬰兒食品</option>
-                <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
-                <option value="餵食用具">🍴 餵食用具</option>
-              </optgroup>
-
-              {/* 🧸 玩具 & 學習 */}
-              <optgroup label="🧸 玩具 & 學習">
-                <option value="玩具">🧸 玩具</option>
-                <option value="圖書">📚 圖書</option>
-              </optgroup>
-
-              {/* 👕 衣物類 */}
-              <optgroup label="👕 衣物類">
-                <option value="衣服">👕 衣服</option>
-                <option value="鞋襪">👟 鞋襪</option>
-              </optgroup>
-
-              {/* 🧷 清潔護理 */}
-              <optgroup label="🧷 清潔護理">
-                <option value="尿片">🧷 尿片</option>
-                <option value="清潔用品">🧼 清潔用品</option>
-                <option value="洗護用品">🛁 洗護用品</option>
-              </optgroup>
-
-              {/* 📦 其他 */}
-              <option value="其他">📦 其他</option>
-            </select>
-          </div>
-        </div>
+    <div className="searchbar-filters-wrapper">
+  <div className="searchbar-filters-content">
+    <div style={{
+      display: 'flex',
+      gap: '12px',
+      alignItems: 'center'
+    }}>
+      {/* ✅ 搜尋框（自動撐滿，佔大部分空間） */}
+      <div style={{ 
+        position: 'relative', 
+        flex: 1,  // ✅ 改用 flex: 1 自動撐滿
+        minWidth: 0  // ✅ 允許縮小
+      }}>
+        <Search 
+          size={18} 
+          style={{
+            position: 'absolute',
+            left: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#9ca3af'
+          }}
+        />
+        <input
+          type="text"
+          placeholder="搜尋資源..."
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{
+            width: '100%',
+            padding: '10px 10px 10px 40px',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            fontSize: '14px',
+            outline: 'none'
+          }}
+          onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+          onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+        />
       </div>
+
+      {/* ✅ 種類篩選（縮窄至 160px） */}
+      <select
+        value={filters.category || ''}
+        onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
+        style={{
+          width: '160px',  // ✅ 改為 160px（原本 200px）
+          padding: '10px 12px',
+          border: '2px solid #e5e7eb',
+          borderRadius: '8px',
+          fontSize: '14px',
+          cursor: 'pointer',
+          backgroundColor: 'white',
+          outline: 'none',
+          flexShrink: 0
+        }}
+        onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+        onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+      >
+        <option value="">📂 全部分類</option>  {/* ✅ 改文字 */}
+        
+        {/* 🚼 大件用品 */}
+        <optgroup label="🚼 大件用品">
+          <option value="嬰兒車">🚼 嬰兒車</option>
+          <option value="嬰兒床">🛏️ 嬰兒床</option>
+          <option value="安全座椅">🚗 安全座椅</option>
+          <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
+        </optgroup>
+
+        {/* 🍼 飲食類 */}
+        <optgroup label="🍼 飲食類">
+          <option value="奶粉">🥛 奶粉</option>
+          <option value="嬰兒食品">🍚 嬰兒食品</option>
+          <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
+          <option value="餵食用具">🍴 餵食用具</option>
+        </optgroup>
+
+        {/* 🧸 玩具 & 學習 */}
+        <optgroup label="🧸 玩具 & 學習">
+          <option value="玩具">🧸 玩具</option>
+          <option value="圖書">📚 圖書</option>
+        </optgroup>
+
+        {/* 👕 衣物類 */}
+        <optgroup label="👕 衣物類">
+          <option value="衣服">👕 衣服</option>
+          <option value="鞋襪">👟 鞋襪</option>
+        </optgroup>
+
+        {/* 🧷 清潔護理 */}
+        <optgroup label="🧷 清潔護理">
+          <option value="尿片">🧷 尿片</option>
+          <option value="清潔用品">🧼 清潔用品</option>
+          <option value="洗護用品">🛁 洗護用品</option>
+        </optgroup>
+
+        {/* 📦 其他 */}
+        <option value="其他">📦 其他</option>
+      </select>
+    </div>
+  </div>
+</div>
 
       {/* ✅ 手機版：變返直排 */}
       <style jsx>{`

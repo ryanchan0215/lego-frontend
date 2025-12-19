@@ -68,109 +68,120 @@ function SearchBar({
         </div>
       </div>
 
-      {/* ✅ 一行過篩選器（收窄版） */}
-    <div className="searchbar-filters-wrapper">
-  <div className="searchbar-filters-content">
-    <div style={{
-      display: 'flex',
-      gap: '12px',
-      alignItems: 'center'
-    }}>
-      {/* ✅ 搜尋框（自動撐滿，佔大部分空間） */}
-      <div style={{ 
-        position: 'relative', 
-        flex: 1,  // ✅ 改用 flex: 1 自動撐滿
-        minWidth: 0  // ✅ 允許縮小
+      {/* ✅ 一行過篩選器（修正版） */}
+      <div className="searchbar-filters-wrapper" style={{
+        width: '100%',           // ✅ 新增
+        overflow: 'hidden'       // ✅ 新增：防止溢出
       }}>
-        <Search 
-          size={18} 
-          style={{
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#9ca3af'
-          }}
-        />
-        <input
-          type="text"
-          placeholder="搜尋資源..."
-          value={searchTerm}
-          onChange={handleSearch}
-          style={{
-            width: '100%',
-            padding: '10px 10px 10px 40px',
-            border: '2px solid #e5e7eb',
-            borderRadius: '8px',
-            fontSize: '14px',
-            outline: 'none'
-          }}
-          onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-          onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-        />
+        <div className="searchbar-filters-content" style={{
+          maxWidth: '100%'       // ✅ 新增
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center',
+            width: '100%'        // ✅ 新增
+          }}>
+            {/* ✅ 搜尋框 */}
+            <div style={{ 
+              position: 'relative', 
+              flex: 1,
+              minWidth: 0,
+              maxWidth: 'calc(100% - 172px)'  // ✅ 新增（160px select + 12px gap）
+            }}>
+              <Search 
+                size={18} 
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af',
+                  pointerEvents: 'none',  // ✅ 新增：防止阻擋點擊
+                  zIndex: 1               // ✅ 新增
+                }}
+              />
+              <input
+                type="text"
+                placeholder="搜尋資源..."
+                value={searchTerm}
+                onChange={handleSearch}
+                style={{
+                  width: '100%',
+                  padding: '10px 10px 10px 40px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'  // ✅ 新增：關鍵修正
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+              />
+            </div>
+
+            {/* ✅ 種類篩選 */}
+            <select
+              value={filters.category || ''}
+              onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
+              style={{
+                width: '160px',
+                padding: '10px 12px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                outline: 'none',
+                flexShrink: 0,
+                boxSizing: 'border-box'  // ✅ 新增：關鍵修正
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+            >
+              <option value="">📂 全部分類</option>
+              
+              {/* 🚼 大件用品 */}
+              <optgroup label="🚼 大件用品">
+                <option value="嬰兒車">🚼 嬰兒車</option>
+                <option value="嬰兒床">🛏️ 嬰兒床</option>
+                <option value="安全座椅">🚗 安全座椅</option>
+                <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
+              </optgroup>
+
+              {/* 🍼 飲食類 */}
+              <optgroup label="🍼 飲食類">
+                <option value="奶粉">🥛 奶粉</option>
+                <option value="嬰兒食品">🍚 嬰兒食品</option>
+                <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
+                <option value="餵食用具">🍴 餵食用具</option>
+              </optgroup>
+
+              {/* 🧸 玩具 & 學習 */}
+              <optgroup label="🧸 玩具 & 學習">
+                <option value="玩具">🧸 玩具</option>
+                <option value="圖書">📚 圖書</option>
+              </optgroup>
+
+              {/* 👕 衣物類 */}
+              <optgroup label="👕 衣物類">
+                <option value="衣服">👕 衣服</option>
+                <option value="鞋襪">👟 鞋襪</option>
+              </optgroup>
+
+              {/* 🧷 清潔護理 */}
+              <optgroup label="🧷 清潔護理">
+                <option value="尿片">🧷 尿片</option>
+                <option value="清潔用品">🧼 清潔用品</option>
+                <option value="洗護用品">🛁 洗護用品</option>
+              </optgroup>
+
+              {/* 📦 其他 */}
+              <option value="其他">📦 其他</option>
+            </select>
+          </div>
+        </div>
       </div>
-
-      {/* ✅ 種類篩選（縮窄至 160px） */}
-      <select
-        value={filters.category || ''}
-        onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}
-        style={{
-          width: '160px',  // ✅ 改為 160px（原本 200px）
-          padding: '10px 12px',
-          border: '2px solid #e5e7eb',
-          borderRadius: '8px',
-          fontSize: '14px',
-          cursor: 'pointer',
-          backgroundColor: 'white',
-          outline: 'none',
-          flexShrink: 0
-        }}
-        onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-        onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
-      >
-        <option value="">📂 全部分類</option>  {/* ✅ 改文字 */}
-        
-        {/* 🚼 大件用品 */}
-        <optgroup label="🚼 大件用品">
-          <option value="嬰兒車">🚼 嬰兒車</option>
-          <option value="嬰兒床">🛏️ 嬰兒床</option>
-          <option value="安全座椅">🚗 安全座椅</option>
-          <option value="揹帶 / 腰凳">👶 揹帶 / 腰凳</option>
-        </optgroup>
-
-        {/* 🍼 飲食類 */}
-        <optgroup label="🍼 飲食類">
-          <option value="奶粉">🥛 奶粉</option>
-          <option value="嬰兒食品">🍚 嬰兒食品</option>
-          <option value="奶樽 / 奶咀">🍼 奶樽 / 奶咀</option>
-          <option value="餵食用具">🍴 餵食用具</option>
-        </optgroup>
-
-        {/* 🧸 玩具 & 學習 */}
-        <optgroup label="🧸 玩具 & 學習">
-          <option value="玩具">🧸 玩具</option>
-          <option value="圖書">📚 圖書</option>
-        </optgroup>
-
-        {/* 👕 衣物類 */}
-        <optgroup label="👕 衣物類">
-          <option value="衣服">👕 衣服</option>
-          <option value="鞋襪">👟 鞋襪</option>
-        </optgroup>
-
-        {/* 🧷 清潔護理 */}
-        <optgroup label="🧷 清潔護理">
-          <option value="尿片">🧷 尿片</option>
-          <option value="清潔用品">🧼 清潔用品</option>
-          <option value="洗護用品">🛁 洗護用品</option>
-        </optgroup>
-
-        {/* 📦 其他 */}
-        <option value="其他">📦 其他</option>
-      </select>
-    </div>
-  </div>
-</div>
 
       {/* ✅ 手機版：變返直排 */}
       <style jsx>{`
