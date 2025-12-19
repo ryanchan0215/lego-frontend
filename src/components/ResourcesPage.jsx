@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, Download, FileText, Search, X } from 'lucide-react';
+import { Upload, Download, FileText, Search, X, Eye, Lock } from 'lucide-react';
 import { request } from '../api';
 
 const CATEGORIES = [
@@ -11,43 +11,18 @@ const CATEGORIES = [
   { value: 'safety', label: '🛡️ 安全須知', color: '#ec4899' }
 ];
 
-// ✅ Supabase 設定（Hard-coded，同 imageCompression.js 一樣）
+// ✅ Supabase 設定
 const SUPABASE_URL = 'https://fifgdbgibdclpztlcxog.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU';
 
-/**
- * ✅ Upload PDF 到 Supabase（跟 imageCompression.js 一樣）
- */
-async function uploadPdfToSupabase(file) {
-  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-  const folder = 'baby-resources';
-  
-  const response = await fetch(
-    `${SUPABASE_URL}/storage/v1/object/${folder}/${fileName}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': file.type
-      },
-      body: file
-    }
-  );
-  
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Upload 失敗: ${error}`);
-  }
-  
-  return `${SUPABASE_URL}/storage/v1/object/public/${folder}/${fileName}`;
-}
-
-function ResourcesPage({ currentUser }) {
+function ResourcesPage({ currentUser, onLoginRequired }) {
   const [resources, setResources] = useState([]);
   const [filteredResources, setFilteredResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewResource, setPreviewResource] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,8 +62,32 @@ function ResourcesPage({ currentUser }) {
     setFilteredResources(filtered);
   };
 
+  // ✅ 預覽 PDF（登入才可以）
+  const handlePreview = (resource) => {
+    if (!currentUser) {
+      alert('⚠️ 請先登入才能預覽資源');
+      if (onLoginRequired) onLoginRequired();
+      return;
+    }
+    setPreviewResource(resource);
+    setShowPreviewModal(true);
+  };
+
+  // ✅ 下載 PDF（登入 + 記錄次數）
   const handleDownload = async (resource) => {
+    if (!currentUser) {
+      alert('⚠️ 請先登入才能下載資源');
+      if (onLoginRequired) onLoginRequired();
+      return;
+    }
+
     try {
+      // ✅ 記錄下載次數
+      await request(`/resources/${resource.id}/download`, {
+        method: 'POST'
+      });
+
+      // ✅ 下載檔案
       const link = document.createElement('a');
       link.href = resource.file_path;
       link.download = resource.file_name;
@@ -96,6 +95,10 @@ function ResourcesPage({ currentUser }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      // ✅ 重新載入（更新下載次數）
+      loadResources();
+
     } catch (error) {
       console.error('下載失敗:', error);
       alert('下載失敗');
@@ -135,7 +138,9 @@ function ResourcesPage({ currentUser }) {
             color: '#6b7280',
             margin: 0
           }}>
-            免費下載育兒資源、字帖、健康指南等
+            {currentUser 
+              ? '免費下載育兒資源、字帖、健康指南等' 
+              : '🔒 請登入後下載資源'}
           </p>
         </div>
 
@@ -253,7 +258,8 @@ function ResourcesPage({ currentUser }) {
                   borderRadius: '12px',
                   padding: '20px',
                   transition: 'all 0.2s',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  position: 'relative'
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.borderColor = category.color;
@@ -264,6 +270,20 @@ function ResourcesPage({ currentUser }) {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
+                {/* ✅ 未登入時顯示鎖定圖示 */}
+                {!currentUser && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: '#fee2e2',
+                    padding: '6px',
+                    borderRadius: '50%'
+                  }}>
+                    <Lock size={16} color="#dc2626" />
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: 'inline-block',
@@ -305,36 +325,74 @@ function ResourcesPage({ currentUser }) {
                   marginBottom: '16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  flexWrap: 'wrap'
                 }}>
                   <FileText size={14} />
-                  {resource.file_name}
+                  <span>{resource.file_name}</span>
                   {resource.file_size && (
                     <span>• {(resource.file_size / 1024).toFixed(1)} KB</span>
                   )}
+                  {/* ✅ 顯示下載次數 */}
+                  <span>• {resource.download_count || 0} 次下載</span>
                 </div>
 
-                <button
-                  onClick={() => handleDownload(resource)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    backgroundColor: category.color,
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Download size={16} />
-                  下載 PDF
-                </button>
+                {/* ✅ 預覽 + 下載按鈕 */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => handlePreview(resource)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: currentUser ? '#f3f4f6' : '#e5e7eb',
+                      color: currentUser ? '#374151' : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: currentUser ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseOver={(e) => {
+                      if (currentUser) {
+                        e.currentTarget.style.backgroundColor = '#e5e7eb';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (currentUser) {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                      }
+                    }}
+                  >
+                    <Eye size={16} />
+                    預覽
+                  </button>
+
+                  <button
+                    onClick={() => handleDownload(resource)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: currentUser ? category.color : '#e5e7eb',
+                      color: currentUser ? 'white' : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: currentUser ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Download size={16} />
+                    下載
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -351,12 +409,141 @@ function ResourcesPage({ currentUser }) {
           }}
         />
       )}
+
+      {/* ✅ Preview Modal */}
+      {showPreviewModal && previewResource && (
+        <PreviewModal
+          resource={previewResource}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewResource(null);
+          }}
+          onDownload={() => handleDownload(previewResource)}
+        />
+      )}
     </div>
   );
 }
 
 // ========================================
-// 📤 Upload Modal（✅ 用 fetch，唔用 supabase client）
+// 👁️ Preview Modal
+// ========================================
+function PreviewModal({ resource, onClose, onDownload }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px'
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          width: '100%',
+          maxWidth: '900px',
+          height: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 20px',
+          borderBottom: '2px solid #e5e7eb'
+        }}>
+          <div>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: '700',
+              color: '#1f2937',
+              margin: '0 0 4px 0'
+            }}>
+              {resource.title}
+            </h3>
+            <p style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              margin: 0
+            }}>
+              {resource.file_name}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={onDownload}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+            >
+              <Download size={16} />
+              下載
+            </button>
+
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '8px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <X size={24} color="#dc2626" />
+            </button>
+          </div>
+        </div>
+
+        {/* PDF Viewer */}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <iframe
+            src={`${resource.file_path}#toolbar=0`}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none'
+            }}
+            title={resource.title}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================================
+// 📤 Upload Modal
 // ========================================
 function UploadModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -368,78 +555,76 @@ function UploadModal({ onClose, onSuccess }) {
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!file) {
-    alert('請選擇檔案！');
-    return;
-  }
-
-  if (file.type !== 'application/pdf') {
-    alert('只接受 PDF 檔案！');
-    return;
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    alert('檔案不能超過 10MB！');
-    return;
-  }
-
-  setUploading(true);
-
-  try {
-    console.log('📤 開始上載 PDF 到 Supabase...');
-
-    // ✅ Upload 到 baby-resources/resources/
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
-    const bucket = 'baby-resources';
-    const subfolder = 'resources';
-    const filePath = `${subfolder}/${fileName}`;
-    
-    const uploadResponse = await fetch(
-      `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/${bucket}/${filePath}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZmdkYmdpYmRjbHB6dGxjeG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNzI4NzQsImV4cCI6MjA4MDk0ODg3NH0.fuaN7rts5nl6sAO8R92FZOk1MJBviN4mVZ7iZVsfxgU`,
-          'Content-Type': file.type
-        },
-        body: file
-      }
-    );
-
-    if (!uploadResponse.ok) {
-      const error = await uploadResponse.text();
-      throw new Error(`Supabase Upload 失敗: ${error}`);
+    if (!file) {
+      alert('請選擇檔案！');
+      return;
     }
 
-    const publicUrl = `https://fifgdbgibdclpztlcxog.supabase.co/storage/v1/object/public/${bucket}/${filePath}`;
+    if (file.type !== 'application/pdf') {
+      alert('只接受 PDF 檔案！');
+      return;
+    }
 
-    console.log('✅ Supabase 上載成功:', publicUrl);
+    if (file.size > 10 * 1024 * 1024) {
+      alert('檔案不能超過 10MB！');
+      return;
+    }
 
-    // ✅ 儲存到資料庫
-    await request('/resources/upload', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        file_name: file.name,
-        file_path: publicUrl,
-        file_size: file.size
-      })
-    });
+    setUploading(true);
 
-    alert('✅ 上載成功！');
-    onSuccess();
+    try {
+      console.log('📤 開始上載 PDF 到 Supabase...');
 
-  } catch (error) {
-    console.error('❌ 上載失敗:', error);
-    alert('上載失敗：' + error.message);
-  } finally {
-    setUploading(false);
-  }
-};
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`;
+      const bucket = 'baby-resources';
+      const subfolder = 'resources';
+      const filePath = `${subfolder}/${fileName}`;
+      
+      const uploadResponse = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': file.type
+          },
+          body: file
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.text();
+        throw new Error(`Supabase Upload 失敗: ${error}`);
+      }
+
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+
+      console.log('✅ Supabase 上載成功:', publicUrl);
+
+      await request('/resources/upload', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          file_name: file.name,
+          file_path: publicUrl,
+          file_size: file.size
+        })
+      });
+
+      alert('✅ 上載成功！');
+      onSuccess();
+
+    } catch (error) {
+      console.error('❌ 上載失敗:', error);
+      alert('上載失敗：' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div
@@ -468,7 +653,6 @@ function UploadModal({ onClose, onSuccess }) {
           padding: '24px'
         }}
       >
-        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -505,7 +689,6 @@ function UploadModal({ onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{

@@ -8,11 +8,10 @@ import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
 import MessageCenter from './components/MessageCenter/MessageCenter';
 import PostDetailModal from './components/PostDetailModal';
-import ResourcesPage from './components/ResourcesPage'; // ✅ 新增
+import ResourcesPage from './components/ResourcesPage';
 import { postsAPI, authAPI, tokenManager, userManager } from './api';
 import PromotionBanner from './components/PromotionBanner';
 import BulkSalePromo from './components/BulkSalePromo';
-
 
 function App() {
   const [posts, setPosts] = useState([]);
@@ -30,7 +29,7 @@ function App() {
   const [selectedPostDetail, setSelectedPostDetail] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   
-  const [currentPage, setCurrentPage] = useState('home'); // ✅ 新增：頁面狀態
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     initializeApp();
@@ -228,6 +227,12 @@ function App() {
     userManager.setUser(updatedUser);
   };
 
+  // ✅ 新增：處理需要登入的情況
+  const handleLoginRequired = () => {
+    alert('⚠️ 請先登入');
+    setShowLogin(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -258,8 +263,8 @@ function App() {
         }}
         onMessageCenterClick={handleMessageCenterClick}
         onUserUpdate={handleUserUpdate}
-        onResourcesClick={() => setCurrentPage('resources')} // ✅ 新增
-        onHomeClick={() => setCurrentPage('home')}           // ✅ 新增
+        onResourcesClick={() => setCurrentPage('resources')}
+        onHomeClick={() => setCurrentPage('home')}
       />
 
       {/* ✅ 根據 currentPage 顯示不同內容 */}
@@ -308,8 +313,11 @@ function App() {
           </div>
         </main>
       ) : (
-        // ✅ 顯示 BB 資源頁面
-        <ResourcesPage currentUser={currentUser} />
+        // ✅ 顯示 BB 資源頁面（傳遞 onLoginRequired）
+        <ResourcesPage 
+          currentUser={currentUser}
+          onLoginRequired={handleLoginRequired}
+        />
       )}
 
       <div className="bottom-ad">
